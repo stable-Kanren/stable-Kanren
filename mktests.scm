@@ -4237,6 +4237,7 @@ w)
     ((_ title tested-expression expected-result)
      (begin
        (cout "Testing " title nl)
+       ; [ToDo] Make a test-setup/tear down for a test suite.
        (let* ((expected expected-result)
               (produced tested-expression))
          (or (equal? expected produced)

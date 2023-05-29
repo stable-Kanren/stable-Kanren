@@ -4,7 +4,12 @@
 
 (define-syntax lambdag@
   (syntax-rules ()
-    ((_ (n cfs s) e ...) (lambda (n cfs s) e ...))))
+    ((_ (n cfs c) e ...) (lambda (n cfs c) e ...))
+    ((_ (n cfs c : S P) e ...)
+     (lambda (n cfs c)
+      (let ([S (c->S c)]
+            [P (c->P c)])
+        e ...)))))
 
 (define-syntax lambdaf@
   (syntax-rules ()
@@ -22,14 +27,31 @@
 
 (define var? (lambda (x) (vector? x)))
 
+(define c->S (lambda (c) (car c)))
+
+(define c->P (lambda (c) (cadr c)))
+
 (define empty-s '())
 
+(define empty-c '(() ()))
+
 (define negation-counter 0)
+
+(define ground-program -2)
 
 (define call-frame-stack '())
 
 (define (expand-cfs k v cfs)
   (adjoin-set (make-record k v) cfs))
+
+;;; Record the procedure we produced the result.
+(define (ext-p name argv)
+  (lambdag@(n cfs c : S P)
+    ; At this point, all arguments have a substitution.
+    (let ((key (map (lambda (arg)
+                    (walk arg S)) argv) ))
+    ; So the partial result will record the predicate with actual values.
+    (list S (adjoin-set (make-record (list name key) n) P)))))
 
 (define walk
   (lambda (u S)
@@ -134,9 +156,33 @@
      (take n
        (lambdaf@ ()
          ((fresh (x) g0 g ... 
-            (lambdag@ (negation-counter call-frame-stack s)
-              (cons (reify x s) '())))
-          negation-counter call-frame-stack empty-s))))))
+          ; [ToDo] Performance optimization, stratified programs don't need such
+          ; checking, we are still deciding which way we want to choose. If our
+          ; priority ordering algorithm can turn the BFS into DFS in a few
+          ; iterations on stratified programs, we saved extra computation on
+          ; determining whether the input program is stratified.
+          (lambdag@ (negation-counter cfs c : S P)
+            (if (null? 
+                ; `check-all-rules` computes all future answers, but we only
+                ; need to find one to make sure the partial answer is good.
+                ;
+                ; [ToDo] Performance optimization, currently, the computation is
+                ; evenly interleaved among different streams (BFS). And we can
+                ; use the information we collected from different streams to change
+                ; the priority of each stream. Eventually, the 100% one will
+                ; dominate (found the answer), and our computation becoming DFS.
+                ; Here is where the bottom-up CDNL could be helpful, we will
+                ; explore more later.
+                ;
+                ; Lastly, to show there is no answer, we must iterate through
+                ; all streams, but putting the unsatisfiable loop early would
+                ; help reduce the fan-out.
+                (take 1 
+                  (lambdaf@ ()
+                    ((check-all-rules program-rules x) negation-counter cfs c))))
+              (mzero)
+              (cons (reify x S) '()))))
+          negation-counter call-frame-stack empty-c))))))
  
 (define take
   (lambda (n f)
@@ -152,26 +198,26 @@
 
 (define ==
   (lambda (u v)
-    (lambdag@ (n cfs s)
+    (lambdag@ (n cfs c : S P)
       (if (even? n)
         (cond
-          [(unify u v s) => 
+          [(unify u v S) => 
             (lambda (s+) 
-              (unit s+))]
+              (unit (list s+ P)))]
           [else (mzero)])
         (cond
-          [(unify u v s) => 
+          [(unify u v S) => 
             (lambda (s+) 
               (mzero))]
-          [else (unit s)])))))
+          [else (unit c)])))))
 
 (define-syntax fresh
   (syntax-rules ()
     ((_ (x ...) g0 g ...)
-     (lambdag@ (n cfs s)
+     (lambdag@ (n cfs c)
        (inc
          (let ((x (var 'x)) ...)
-           (bind* n cfs (g0 n cfs s) g ...)))))))
+           (bind* n cfs (g0 n cfs c) g ...)))))))
 
 ;;; It's a recursive process that iterates through all values of the bounded
 ;;; temporary variables and creates an incomplete stream(inc) of 
@@ -183,14 +229,14 @@
       ; Removing all vars from (x ...), get the remaining temporary variables.
       (let ([var-list (remove-var-from-list (list x ...) vars)])
         (define (iterate-values values)
-          (lambdag@ (n cfs s)
+          (lambdag@ (n cfs c : S P)
             (if (null? values)
-              s
+              c
               (inc (bind* n cfs
                   ; The remaining temporary variables need "fresh-t" again.
                 ((fresh-t (var-list) g ...) n cfs
                   ; So we can extend vars with all variables by ourselves.
-                  (ext-s-for-all-vars vars (car values) s))
+                  (list (ext-s-for-all-vars vars (car values) S) P))
                   (iterate-values (cdr values)))))))
         iterate-values)]))
 
@@ -204,6 +250,12 @@
 ;;; 
 ;;; > (run* (q) (fresh (x y) (edge x y) (== q `(,x ,y))))
 ;;; ((a b) (b c) (a d))
+;;;
+;;; If x is bounded in the current substitution, the program will get domain of
+;;; y based on that information.
+;;; > (run* (q) (fresh (x y) (== x 'a) (edge x y) (== q `(,x ,y))))
+;;; ((a b) (a d))
+;;; Here, (b c) will not show up.
 (define-syntax domain-values
   (syntax-rules ()
     [(_ g0 bounded-vars cfs s)
@@ -217,8 +269,8 @@
           ; So, (== tmp bounded-vars) is the same as (== q `(,x ,y)).
           (== tmp bounded-vars)
           ; Eventually, we reify the tmp variable to get all values.
-          (lambdag@ (dummy_n dummy_cfs final-s)
-            (cons (reify tmp final-s) '())))
+          (lambdag@ (dummy_n dummy_cfs c : S P)
+            (cons (reify tmp S) '())))
           negation-counter cfs s)))]))
 
 ;;; Our previous implementation of complement and conde-t applies the DeMorgan 
@@ -277,29 +329,53 @@
      (conde 
        [g0] 
        ;;; Before executing "g0", we saved the current context.
-       [(lambdag@ (n cfs s)
+       [(lambdag@ (n cfs c : S P)
           ((fresh ()
             ; Run g0
             (noto g0)
             ;;; After executing "g0", we are comparing the two context.
-            (lambdag@ (nn ff ss)
+            (lambdag@ (nn ff cc : SS PP)
                      ; Diff the length of two substitutions.
-              (let* ([diff (- (length ss) (length s))]
+              (let* ([diff (- (length SS) (length S))]
                      ; Use the diff to get difference of the two lists.
-                     [extended-s (get-first-n-elements ss diff)]
+                     [extended-s (get-first-n-elements SS diff)]
                      ; Use the list to get bounded temporary variables.
                      [argv (list x ...)]
                      [bounded-vars (find-bound-vars argv extended-s)])
                 ; Check if any (x ...) got a value.
                 (if (null? bounded-vars)
                   ; if not keep running future sub-goals (g ...).
-                  ((fresh-t (x ...) g ...) nn ff ss)
+                  ((fresh-t (x ...) g ...) nn ff cc)
                   ; if so get all values of the variables.
                   ; check all future sub-goals (g ...) can be proven true for 
                   ; ALL values of bounded-vars.
                   (((forall (x ...) (g ...) bounded-vars) 
-                    (domain-values g0 bounded-vars cfs s)) n cfs s))))
-          ) n cfs s))]))))
+                    (domain-values g0 bounded-vars cfs c)) n cfs c))))
+          ) n cfs c))]))))
+
+;;; Ignore the negative literal in the program to ground the variable.
+;;; This gives us a superset of the variable's values.
+(define-syntax ignore-negation
+  (syntax-rules (conde)
+    ((_ (conde (g0 g ...) (g1 g^ ...) ...))
+        (conde [(ignore-negation g0 g ...)]
+               [(ignore-negation g1 g^ ...)]
+               ...))
+    ((_ (fresh (x ...) g0 g ...))
+        (fresh (x ...) (ignore-negation g0 g ...)))
+    ((_ (g0 ...)) 
+      (let ((name (car `(g0 ...))))
+        (if (equal? name 'noto)
+            succeed
+            (g0 ...))))
+    ((_ (g0 ...) (g1 ...) ...) 
+      (let ((name (car `(g0 ...))))
+        (fresh () 
+          (if (equal? name 'noto)
+            succeed
+            (g0 ...))
+        (ignore-negation (g1 ...) ...))))
+    ((_ g) g)))
  
 (define-syntax bind*
   (syntax-rules ()
@@ -317,11 +393,11 @@
 (define-syntax conde
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
-     (lambdag@ (n cfs s) 
+     (lambdag@ (n cfs c) 
        (inc 
          (mplus* 
-           (bind* n cfs (g0 n cfs s) g ...)
-           (bind* n cfs (g1 n cfs s) g^ ...) ...))))))
+           (bind* n cfs (g0 n cfs c) g ...)
+           (bind* n cfs (g1 n cfs c) g^ ...) ...))))))
 
 ;;; Turns conjunction of goals (g0, g, ...) into disjunction of goals (g0; g; ...).
 (define-syntax conde-t
@@ -356,10 +432,10 @@
 (define-syntax conda
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
-     (lambdag@ (n cfs s)
+     (lambdag@ (n cfs c)
        (inc
-         (ifa n cfs ((g0 n cfs s) g ...)
-                   ((g1 n cfs s) g^ ...) ...))))))
+         (ifa n cfs ((g0 n cfs c) g ...)
+                   ((g1 n cfs c) g^ ...) ...))))))
  
 (define-syntax ifa
   (syntax-rules ()
@@ -375,10 +451,10 @@
 (define-syntax condu
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
-     (lambdag@ (n cfs s)
+     (lambdag@ (n cfs c)
        (inc
-         (ifu n cfs ((g0 n cfs s) g ...)
-                   ((g1 n cfs s) g^ ...) ...))))))
+         (ifu n cfs ((g0 n cfs c) g ...)
+                   ((g1 n cfs c) g^ ...) ...))))))
  
 (define-syntax ifu
   (syntax-rules ()
@@ -394,9 +470,9 @@
 (define-syntax project
   (syntax-rules ()
     ((_ (x ...) g g* ...)
-     (lambdag@ (n cfs s)
-       (let ((x (walk* x s)) ...)
-         ((fresh () g g* ...) n cfs s))))))
+     (lambdag@ (n cfs c : S P)
+       (let ((x (walk* x S)) ...)
+         ((fresh () g g* ...) n cfs c))))))
 
 (define succeed (== #f #f))
 
@@ -408,6 +484,77 @@
       (g succeed)
       ((== #f #f) fail))))
 
+(define program-rules `())
+
+(define reset-program (lambda () (set! program-rules `())))
+
+;;; Fetch one rule from the program rules set until the set is empty.
+(define (fetch-rule rules-set)
+  (if (null? rules-set)
+      #f
+      (car rules-set)))
+
+;;; Construct a list of n temporary variables.
+(define (construct-var-list n)
+  (if (= n 0)
+      `()
+      (cons (var (format "temp_~a" n)) (construct-var-list (- n 1)))))
+
+;;; Use the reduct program to get all value sets of a given goal with unbounded
+;;; variables. The reduct program is a special program without any negations.
+;;; The "take #f" is the underlying implementation of the "run*" interface,
+;;; please refer to the "run*"" implementation to learn more details.
+;;;
+;;; For example,
+;;;   A goal function edge(x, y)
+;;;   We do "(run* (tmp) (fresh (x y) (edge x y) (== tmp `(,x ,y))))"
+;;;
+;;; This function is different than the `domain-values` we used for getting
+;;; values under context settings. (n is always -2 v.s n = negation counter)
+(define (get-values goal vars)
+  ; [ToDo] If we get an empty set after filtering, we found an unsafe variable.
+  (sort compare-element (remove-duplicates 
+  (take #f 
+    (lambdaf@ ()
+      ((fresh (tmp)
+        (apply (eval goal) vars)
+        (== tmp vars)
+        (lambdag@ (n f c : S P)
+          (cons (reify tmp S) '())))
+        ground-program call-frame-stack empty-c))))))
+
+;;; For a normal program, we need to check all the rules, especially those with 
+;;; negation literals inside. So that we make sure we find a stable model.
+(define (check-all-rules rules-set x)
+  (lambdag@ (dummy frame final-c : S P)
+    (let ((rule (fetch-rule rules-set)))
+      (if (and rule #t)
+        ; [ToDo] Handle the propositional case here.
+        ; If the arity is 0, we don't need to get-values, we can run the
+        ; goal directly.
+        (let* ([goal (get-key rule)]
+               [arity (get-value rule)]
+               [vals (get-values goal (construct-var-list arity))])
+          (bind* dummy frame
+            ((check-rule-with-all-values goal vals) dummy frame final-c)
+            (check-all-rules (cdr rules-set) x)))
+        (cons (reify x S) '())))))
+
+;;; For each rule, we need to check all possible values of head variables. 
+(define (check-rule-with-all-values rule values)
+  (lambdag@(_ cfs c)
+    (if (null? values)
+      (unit c)
+      (inc
+        (mplus*
+          (bind* 0 cfs 
+            ((apply (eval rule) (car values)) 0 cfs c)
+            (check-rule-with-all-values rule (cdr values)))
+          (bind* 1 cfs 
+            ((apply (eval rule) (car values)) 1 cfs c)
+            (check-rule-with-all-values rule (cdr values)))
+        )))))
+
 (define-syntax noto
   (syntax-rules ()
     ((noto (name params ...))
@@ -417,20 +564,37 @@
 (define-syntax defineo
   (syntax-rules ()
     ((_ (name params ...) exp ...)
+      (begin
+      ;;; Add rule to program-rules set.
+      (set! program-rules (adjoin-set (make-record `name 
+                                        (length (list `params ...)))
+                            program-rules))
       ;;; Define a goal function with the original rules "exp ...", and the 
       ;;; complement rules "complement exp ..."
       (define name (lambda (params ...)
         ;;; Obtain a list of argument variables.
         (let ([argv (list params ...)])
-        (lambdag@ (n cfs s)
+        (lambdag@ (n cfs c : S P)
           ;;; Concrete the variables to values.
-          ;;; If the variable has a substituition it will be replaced with a 
+          ;;; If the variable has a substitution it will be replaced with a 
           ;;; value, otherwise it will be the parameter's name.
           (let* ([args (map (lambda (arg)
-                             (walk* arg s))
+                             (walk* arg S))
                            argv)]
                  [signature (list `name args)]
+                 [result (element-of-set? signature P)]
                  [record (element-of-set? signature cfs)])
+          ;;; Before the execution, check if we have computed the partial result.
+          (cond
+            ;;; If the partial result has the same parity as n, returning true.
+            ;;; Otherwise, returning false.
+            ;;; Since we only save the successfully proved result, for example,
+            ;;; we have proved "not a(5)" is true, the partial result would be
+            ;;; ( ((a 5) 1) ), the next time we are sovling "a(5)", we should
+            ;;; return false.
+            [(and result (even? (+ n (get-value result)))) (unit c)]
+            [(and result (odd? (+ n (get-value result)))) (mzero)]
+            (else
           ;;; Before the execution, check if the goal we have encountered during
           ;;; the solving process.
           (if (and record #t)
@@ -439,12 +603,25 @@
               ;;; Positive loop. Minimal model semantics specified the positive
               ;;; loop should return false.
               [(and (= 0 diff) (even? n)) (mzero)]
-              [(and (= 0 diff) (odd? n)) (unit s)]))
+              [(and (= 0 diff) (odd? n)) (unit c)]
+              ;;; Negative loop. Stable model semantics specified the odd loop
+              ;;; should return false and the even loop should return choice of
+              ;;; true or false.
+              ;;; [ToDo] To make the solver fully declarative top-down, it is 
+              ;;; supposed to add a complementary version of the current goal
+              ;;; into the resolution process. We are using some bottom-up 
+              ;;; ideas in the global constraint checking `check-all-rules.`
+              [(and (not (= 0 diff)) (odd? diff)) (mzero)]
+              [(and (not (= 0 diff)) (even? diff)) (choice c mzero)]))
             ;;; During the execution, the goal function picks the corresponding
             ;;; rule set based on the value of the negation counter.
             ;;;   n >= 0 and even, use original rules
             ;;;   n >= 0 and odd, use complement rules
-            ((cond ((even? n) (fresh () exp ...))
-                   ((odd? n) (complement exp ...))
+            ;;; After the execution, we memorize the partial result. We can't 
+            ;;; use the signature for ext-p here, as the signature was obtained
+            ;;; before the execution of the goal function.
+            ((cond ((= n ground-program) (fresh () (ignore-negation exp ...)))
+                   ((even? n) (fresh () exp ... (ext-p `name argv)))
+                   ((odd? n) (fresh () (complement exp ...) (ext-p `name argv)))
                    (else fail))
-              n (expand-cfs signature n cfs) s))))))))))
+              n (expand-cfs signature n cfs) c)))))))))))))
