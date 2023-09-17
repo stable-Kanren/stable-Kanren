@@ -10,10 +10,9 @@
     [(== x 'c) (== y 'd)]))
 
 (defineo (win x)
-  (conde
-    [(fresh (y)
-      (edge x y)
-      (noto (win y)))]))
+  (fresh (y)
+    (edge x y)
+    (noto (win y))))
 
 ;;; Loop over negation.
 (test-check "testtpg.tex-1a"
