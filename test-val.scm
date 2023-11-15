@@ -40,7 +40,7 @@
     (lambdaf@ ()
       ((fresh (tmp)
         (win tmp)
-        (lambdag@ (n f c : S P)
+        (lambdag@ (n f c : S P L)
           (cons (reify tmp S) '())))
         ground-program call-frame-stack empty-c)))))
 
@@ -76,7 +76,7 @@
     (lambdaf@ ()
       ((fresh (tmp)
         (p tmp)
-        (lambdag@ (n f c : S P)
+        (lambdag@ (n f c : S P L)
           (cons (reify tmp S) '())))
         ground-program call-frame-stack empty-c)))))
 
@@ -88,7 +88,7 @@
     (lambdaf@ ()
       ((fresh (tmp)
         (q tmp)
-        (lambdag@ (n f c : S P)
+        (lambdag@ (n f c : S P L)
           (cons (reify tmp S) '())))
         ground-program call-frame-stack empty-c)))))
 

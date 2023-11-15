@@ -5,10 +5,11 @@
 (define-syntax lambdag@
   (syntax-rules ()
     ((_ (n cfs c) e ...) (lambda (n cfs c) e ...))
-    ((_ (n cfs c : S P) e ...)
+    ((_ (n cfs c : S P L) e ...)
      (lambda (n cfs c)
       (let ([S (c->S c)]
-            [P (c->P c)])
+            [P (c->P c)]
+            [L (c->L c)])
         e ...)))))
 
 (define-syntax lambdaf@
@@ -31,9 +32,11 @@
 
 (define c->P (lambda (c) (cadr c)))
 
+(define c->L (lambda (c) (caddr c)))
+
 (define empty-s '())
 
-(define empty-c '(() ()))
+(define empty-c '(() () ()))
 
 (define negation-counter 0)
 
@@ -46,12 +49,12 @@
 
 ;;; Record the procedure we produced the result.
 (define (ext-p name argv)
-  (lambdag@(n cfs c : S P)
+  (lambdag@(n cfs c : S P L)
     ; At this point, all arguments have a substitution.
     (let ((key (map (lambda (arg)
                     (walk arg S)) argv) ))
     ; So the partial result will record the predicate with actual values.
-    (list S (adjoin-set (make-record (list name key) n) P)))))
+    (list S (adjoin-set (make-record (list name key) n) P) L))))
 
 (define walk
   (lambda (u S)
@@ -161,7 +164,7 @@
           ; priority ordering algorithm can turn the BFS into DFS in a few
           ; iterations on stratified programs, we saved extra computation on
           ; determining whether the input program is stratified.
-          (lambdag@ (negation-counter cfs c : S P)
+          (lambdag@ (negation-counter cfs c : S P L)
             (if (null? 
                 ; `check-all-rules` computes all future answers, but we only
                 ; need to find one to make sure the partial answer is good.
@@ -198,12 +201,12 @@
 
 (define ==
   (lambda (u v)
-    (lambdag@ (n cfs c : S P)
+    (lambdag@ (n cfs c : S P L)
       (if (even? n)
         (cond
           [(unify u v S) => 
             (lambda (s+) 
-              (unit (list s+ P)))]
+              (unit (list s+ P L)))]
           [else (mzero)])
         (cond
           [(unify u v S) => 
@@ -229,14 +232,14 @@
       ; Removing all vars from (x ...), get the remaining temporary variables.
       (let ([var-list (remove-var-from-list (list x ...) vars)])
         (define (iterate-values values)
-          (lambdag@ (n cfs c : S P)
+          (lambdag@ (n cfs c : S P L)
             (if (null? values)
               c
               (inc (bind* n cfs
                   ; The remaining temporary variables need "fresh-t" again.
                 ((fresh-t (var-list) g ...) n cfs
                   ; So we can extend vars with all variables by ourselves.
-                  (list (ext-s-for-all-vars vars (car values) S) P))
+                  (list (ext-s-for-all-vars vars (car values) S) P L))
                   (iterate-values (cdr values)))))))
         iterate-values)]))
 
@@ -269,7 +272,7 @@
           ; So, (== tmp bounded-vars) is the same as (== q `(,x ,y)).
           (== tmp bounded-vars)
           ; Eventually, we reify the tmp variable to get all values.
-          (lambdag@ (dummy_n dummy_cfs c : S P)
+          (lambdag@ (dummy_n dummy_cfs c : S P L)
             (cons (reify tmp S) '())))
           negation-counter cfs s)))]))
 
@@ -329,12 +332,12 @@
      (conde 
        [g0] 
        ;;; Before executing "g0", we saved the current context.
-       [(lambdag@ (n cfs c : S P)
+       [(lambdag@ (n cfs c : S P L)
           ((fresh ()
             ; Run g0
             (noto g0)
             ;;; After executing "g0", we are comparing the two context.
-            (lambdag@ (nn ff cc : SS PP)
+            (lambdag@ (nn ff cc : SS PP LL)
                      ; Diff the length of two substitutions.
               (let* ([diff (- (length SS) (length S))]
                      ; Use the diff to get difference of the two lists.
@@ -470,7 +473,7 @@
 (define-syntax project
   (syntax-rules ()
     ((_ (x ...) g g* ...)
-     (lambdag@ (n cfs c : S P)
+     (lambdag@ (n cfs c : S P L)
        (let ((x (walk* x S)) ...)
          ((fresh () g g* ...) n cfs c))))))
 
@@ -519,14 +522,14 @@
       ((fresh (tmp)
         (apply (eval goal) vars)
         (== tmp vars)
-        (lambdag@ (n f c : S P)
+        (lambdag@ (n f c : S P L)
           (cons (reify tmp S) '())))
         ground-program call-frame-stack empty-c))))))
 
 ;;; For a normal program, we need to check all the rules, especially those with 
 ;;; negation literals inside. So that we make sure we find a stable model.
 (define (check-all-rules rules-set x)
-  (lambdag@ (dummy frame final-c : S P)
+  (lambdag@ (dummy frame final-c : S P L)
     (let ((rule (fetch-rule rules-set)))
       (if (and rule #t)
         ; [ToDo] Handle the propositional case here.
@@ -574,7 +577,7 @@
       (define name (lambda (params ...)
         ;;; Obtain a list of argument variables.
         (let ([argv (list params ...)])
-        (lambdag@ (n cfs c : S P)
+        (lambdag@ (n cfs c : S P L)
           ;;; Concrete the variables to values.
           ;;; If the variable has a substitution it will be replaced with a 
           ;;; value, otherwise it will be the parameter's name.
