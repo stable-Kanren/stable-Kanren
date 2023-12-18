@@ -208,19 +208,7 @@
         (cond
           [(unify u v S) => 
             (lambda (s+) 
-              (cond
-                ; [ToDo] Applying a local constraint if there are variables in
-                ; the negative goal. We are saying it is a conditional success.
-                ; Once the variable is unified with a value that violates the 
-                ; constraint, we terminate the search stream.
-                [(and (var? u) (var? v)) (unit c)]
-                ; For a unification (variable -> value), we can add a local
-                ; constraint as well. We currently return false to prevent the
-                ; variable from unifying with a certain value.
-                ;[(or (var? u) (var? v)) (inequality-constraint)]
-                ; We assume the variables are safe (bounded to a value) prior to
-                ; the negative goal.
-                [else (mzero)]))]
+              (mzero))]
           [else (unit c)])))))
 
 (define-syntax fresh
