@@ -1,4 +1,4 @@
-(load "mktests.scm")
+(load "test-utils.scm")
 
 ;;; Testing Closed World Assumption (CWA) in stable-Kanren
 ; p :- a.
