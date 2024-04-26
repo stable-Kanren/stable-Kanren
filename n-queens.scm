@@ -85,7 +85,7 @@
 ; some impure operators just like the "is", ">", "-" in Prolog so that we can
 ; utilize the modern CPU.
 (define (gt lhs rhs)
-  (lambdag@ (n f c : S P)
+  (lambdag@ (n f c : S P L)
     (let ((lhs-num (walk lhs S))
           (rhs-num (walk rhs S)))
         (if (or (not (number? lhs-num)) (not (number? rhs-num)))
@@ -95,7 +95,7 @@
                 (fail n f c))))))
 
 (define (sub minuend subtrahend res)
-  (lambdag@ (n f c : S P)
+  (lambdag@ (n f c : S P L)
     (let ((minuend-num (walk* minuend S))
           (subtrahend-num (walk* subtrahend S)))
         (if (or (not (number? minuend-num)) (not (number? subtrahend-num)))
@@ -103,7 +103,7 @@
         ((== res (- minuend-num subtrahend-num)) n f c)))))
 
 (define (diagonal x y x1 y1)
-  (lambdag@ (n f c : S P)
+  (lambdag@ (n f c : S P L)
     (let ((x-num (walk* x S))
           (y-num (walk* y S))
           (x1-num (walk* x1 S))
