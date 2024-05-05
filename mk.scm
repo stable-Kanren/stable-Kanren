@@ -186,6 +186,16 @@
               (mzero)
               (cons (reify x S) '()))))
           negation-counter call-frame-stack empty-c))))))
+
+(define-syntax run-partial
+  (syntax-rules ()
+    ((_ n (x) g0 g ...)
+     (take n
+       (lambdaf@ ()
+         ((fresh (x) g0 g ... 
+          (lambdag@ (negation-counter cfs c : S P L)
+              (cons (reify x S) '())))
+          negation-counter call-frame-stack empty-c))))))
  
 (define take
   (lambda (n f)
