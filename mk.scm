@@ -497,9 +497,13 @@
       (g succeed)
       ((== #f #f) fail))))
 
+; (name[0|1], ((list (name[0|1] params) ...), expr))
+(define constraint-rules `())
 (define program-rules `())
 
-(define reset-program (lambda () (set! program-rules `())))
+(define reset-program (lambda ()
+  (set! constraint-rules `())
+  (set! program-rules `())))
 
 ;;; Fetch one rule from the program rules set until the set is empty.
 (define (fetch-rule rules-set)
