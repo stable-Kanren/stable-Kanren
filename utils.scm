@@ -87,3 +87,7 @@
 ;;; Comparison function for sorting.
 (define (compare-element lhs rhs)
   (string<? (format "~a" lhs) (format "~a" rhs)))
+
+;;; Extending a symbol with a string.
+(define (sym-append-str sym str)
+  (string->symbol (string-append (symbol->string sym) str)))

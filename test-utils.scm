@@ -1,6 +1,6 @@
 (load "mktests.scm")
 
-;;; Testing rotate-to-first
+;;; ==== Testing rotate-to-first ====
 ; Empty list
 (test-check "testutil.tex-rotate-to-first-1"
 (rotate-to-first 1 `() =)
@@ -31,3 +31,17 @@
 (rotate-to-first 3 `(1 2 3) =)
 
 `(3 1 2))
+
+
+;;; ==== Testing sym-append-str ====
+; Empty string
+(test-check "testutil.tex-sym-append-str-1"
+(sym-append-str 'a "")
+
+'a)
+
+; Normal case
+(test-check "testutil.tex-sym-append-str-2"
+(sym-append-str 'a "1")
+
+'a1)
