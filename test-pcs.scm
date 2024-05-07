@@ -55,3 +55,60 @@
 (constraint-emitter (noto (p x)))
 
 `(p1 x))
+
+;;; ==== Testing constrainto ====
+;;; No emitter
+(reset-program)
+(test-check "testpcx.tex-constrainto-1"
+((lambda ()
+  (constrainto () ())
+  constraint-rules))
+
+`())
+
+;;; No verifier
+(reset-program)
+(test-check "testpcx.tex-constrainto-2"
+((lambda ()
+  (constrainto ((p x)) ())
+  constraint-rules))
+
+`((p0 (((p0 x)) (and)))))
+
+;;; One negative emitter
+(reset-program)
+(test-check "testpcx.tex-constrainto-3"
+((lambda ()
+  (constrainto ((noto (q y))) ((= y 1)))
+  constraint-rules))
+
+`((q1 (((q1 y)) (and (= y 1))))))
+
+;;; One positive emitter
+(reset-program)
+(test-check "testpcx.tex-constrainto-4"
+((lambda ()
+  (constrainto ((r z)) ((= z 2)))
+  constraint-rules))
+
+`((r0 (((r0 z)) (and (= z 2))))))
+
+;;; Mixed negative and positive emitters
+(reset-program)
+(test-check "testpcx.tex-constrainto-5"
+((lambda ()
+  (constrainto ((s a) (noto (t b))) ((= a 3) (= b 4)))
+  constraint-rules))
+
+`((s0 (((s0 a) (t1 b)) (and (= a 3) (= b 4))))
+  (t1 (((t1 b) (s0 a)) (and (= a 3) (= b 4))))))
+
+; Three emitters and duplicated two
+(reset-program)
+(test-check "testpcx.tex-constrainto-6"
+((lambda ()
+  (constrainto ((noto (q y)) (p x) (noto (q z))) ((= x y) (= x z)))
+  constraint-rules))
+
+`((p0 (((p0 x) (q1 z) (q1 y)) (and (= x y) (= x z))))
+  (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))

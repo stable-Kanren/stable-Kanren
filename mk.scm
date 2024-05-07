@@ -87,6 +87,24 @@
     [(_ (g x ...))
         `(,(sym-append-str `g "0") x ...)]))
 
+;;; A constrainto interface for users to define constraints. The constraint has
+;;; a list of emitters and a list of verifiers.
+;;;
+;;; [ToDo] Sanity checking to ensure the verifier gets sufficient values from
+;;; the emitter and returns a boolean result. A syntax sugar to simplify encoding.
+;;; For example,
+;;;   ((q x))        ---> ((q x)) (())
+;;;   ((noto (p 1))) ---> ((noto (p x))) ((= x 1))
+;;;   ((p x) (q x))  ---> ((p y) (q z)) ((= y z))
+(define-syntax constrainto
+  (syntax-rules ()
+    [(_ (g ...) (expr ...))
+      (set! constraint-rules
+        (append constraint-rules
+          (constraint-compiler
+            `(,(constraint-emitter g) ...)
+            '(and expr ...))))]))
+
 ;;; ---- predicate constraint ----
 
 ;;; Record the procedure we produced the result.
