@@ -75,6 +75,18 @@
           ,expr)))
   emitters)))
 
+;;; There are two types of emitters: a negative one "(noto (p x))" and
+;;; a positive one "(p x)." We append a 1 to the negative predicate's name;
+;;; and a 0 to the positive predicate's name.
+;;;
+;;; [ToDo] Handle the nested negative emitter like "(noto (noto (noto (p x))))".
+(define-syntax constraint-emitter
+  (syntax-rules ()
+    [(_ (noto (g x ...)))
+        `(,(sym-append-str `g "1") x ...)]
+    [(_ (g x ...))
+        `(,(sym-append-str `g "0") x ...)]))
+
 ;;; ---- predicate constraint ----
 
 ;;; Record the procedure we produced the result.

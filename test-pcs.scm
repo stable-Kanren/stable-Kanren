@@ -42,3 +42,16 @@
 
 `((p0 (((p0 x) (q1 z) (q1 y)) (and (= x y) (= x z))))
   (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
+
+;;; ==== Testing constraint-emitter ====
+; Positive emitter
+(test-check "testpcx.tex-constraint-emitter-1"
+(constraint-emitter (p x))
+
+`(p0 x))
+
+; Negative emitter
+(test-check "testpcx.tex-constraint-emitter-1"
+(constraint-emitter (noto (p x)))
+
+`(p1 x))
