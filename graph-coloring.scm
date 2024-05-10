@@ -17,9 +17,9 @@
 
 (defineo (color c)
   (conde
-    [(== c "red")]
-    [(== c "green")]
-    [(== c "blue")]))
+    [(== c 'r)]
+    [(== c 'g)]
+    [(== c 'b)]))
 
 (defineo (colorize n in out)
   (conde

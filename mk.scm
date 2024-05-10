@@ -48,7 +48,7 @@
   (adjoin-set (make-record k v) cfs))
 
 ;;; ==== predicate constraint ====
-;;; CCompile emitters and verifier as our internal constraint rule representation.
+;;; Compile emitters and verifier as our internal constraint rule representation.
 ;;; It is a key-value pair of <emitter, [emitters list, verifier]>.
 ;;;
 ;;; The emitter list tracks all emitters to ensure the verifier receives 
