@@ -105,16 +105,25 @@
             `(,(constraint-emitter g) ...)
             '(and expr ...))))]))
 
-;;; Add a quote to a list of symbols. So it can be evaluated as data not code.
+;;; Add a quote to a list of symbols. So, it can be evaluated as data, not code.
 ;;; (eval (eq? a a)) ---> (eval (eq? 'a 'a))
 ;;;
-;;; It has to be a macro to modify code as data, can not define a function.
+;;; It has to be a macro to modify code as data, and it can not be a function.
 ;;; It works for a list of string, number, and symbol only.
 ;;; [ToDo] Add support for complex data structure.
 (define-syntax quote-symbol
   (syntax-rules ()
     [(_ (syms ...))
       `('syms ...)]))
+
+;;; To wrap verifier `expr` around with values from the emitter. (Metaprogramming)
+;;; Verifer like (and (= x y) (> a b)) receives values from the emitter.
+;;; We are constructing a lambda to provide values to the expression.
+;;; [ToDo] Sanity checking to ensure (length (params ...)) = (length (values ...))
+(define-syntax constraint-constructor
+  (syntax-rules ()
+    [(_ (params ...) (values ...) expr)
+      `((lambda (params ...) expr) values ...)]))
 
 ;;; ---- predicate constraint ----
 

@@ -118,3 +118,41 @@
 (quote-symbol (1 "blue" green))
 
 `('1 '"blue" 'green))
+
+;;; ==== Testing constraint-constructor ====
+;;; One layer
+(test-check "testpcx.tex-constraint-constructor-1"
+(constraint-constructor (x y) (1 2) (and (= x y) (= a b)))
+
+`((lambda (x y) (and (= x y) (= a b))) 1 2))
+
+;;; Cascade macros (internal treated as data, not program)
+(test-check "testpcx.tex-constraint-constructor-2"
+(constraint-constructor (a b) (3 4) 
+    (constraint-constructor (x y) (1 2) (and (= x y) (= a b))))
+
+`((lambda (a b)
+   (constraint-constructor (x y) (1 2) (and (= x y) (= a b))))
+  3
+  4))
+
+;;; Cascade invoke multiple layers (using unquote to eval internal macro)
+(test-check "testpcx.tex-constraint-constructor-3"
+(constraint-constructor (a b) (3 4) 
+    ,(constraint-constructor (x y) (1 2) (and (= x y) (= a b))))
+
+`((lambda (a b) ((lambda (x y) (and (= x y) (= a b))) 1 2)) 3 4))
+
+;;; Eval to false
+(test-check "testpcx.tex-constraint-constructor-4"
+(eval (constraint-constructor (a b) (3 4) 
+    ,(constraint-constructor (x y) (1 1) (and (= x y) (> a b)))))
+
+#f)
+
+;;; Eval to true
+(test-check "testpcx.tex-constraint-constructor-5"
+(eval (constraint-constructor (a b) ('g 'g) 
+    ,(constraint-constructor (x y) (42 42) (and (= x y) (eq? a b)))))
+
+#t)
