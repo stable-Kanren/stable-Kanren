@@ -112,3 +112,9 @@
 
 `((p0 (((p0 x) (q1 z) (q1 y)) (and (= x y) (= x z))))
   (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
+
+;;; ==== Testing quote-symbol ====
+(test-check "testpcx.tex-quote-symbol"
+(quote-symbol (1 "blue" green))
+
+`('1 '"blue" 'green))

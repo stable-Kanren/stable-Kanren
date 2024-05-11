@@ -105,6 +105,17 @@
             `(,(constraint-emitter g) ...)
             '(and expr ...))))]))
 
+;;; Add a quote to a list of symbols. So it can be evaluated as data not code.
+;;; (eval (eq? a a)) ---> (eval (eq? 'a 'a))
+;;;
+;;; It has to be a macro to modify code as data, can not define a function.
+;;; It works for a list of string, number, and symbol only.
+;;; [ToDo] Add support for complex data structure.
+(define-syntax quote-symbol
+  (syntax-rules ()
+    [(_ (syms ...))
+      `('syms ...)]))
+
 ;;; ---- predicate constraint ----
 
 ;;; Record the procedure we produced the result.
