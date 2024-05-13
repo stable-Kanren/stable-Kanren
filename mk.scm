@@ -125,6 +125,26 @@
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
 
+;;; The constraint is ready to check when the verifier receives the values from
+;;; the last emitter. The verifier accumulates the previous values, which are
+;;; stored in L. If the verifier only needs one emitter, it stores in constraint-rules.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those verifiers
+;;; that are ready to update after receiving the final values from the emitter.
+;;; We use constraint-constructor to complete the verifier's continuation.
+;;; Then, the verifier is ready to use eval to get the constraint checking outcome.
+(define (constraint-checker emitter vals L)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (eval (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (and (eq? emitter (car row))
+                        (= (length (cdaadr row)) 0)))
+                 (append constraint-rules L)))))
+
 ;;; ---- predicate constraint ----
 
 ;;; Record the procedure we produced the result.

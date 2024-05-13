@@ -156,3 +156,30 @@
     ,(constraint-constructor (x y) (42 42) (and (= x y) (eq? a b)))))
 
 #t)
+
+;;; ==== Testing constraint-checker ====
+;;; No matched emitter name
+(test-check "testpcx.tex-constraint-checker-1"
+(constraint-checker 'q1 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+
+#f)
+
+;;; No ready verifier (length > 0)
+(test-check "testpcx.tex-constraint-checker-2"
+(constraint-checker 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
+
+#f)
+
+;;; Check returns false
+(test-check "testpcx.tex-constraint-checker-1"
+(constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+
+#f)
+
+;;; Check returns true
+(test-check "testpcx.tex-constraint-checker-1"
+(constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (> x 1))))))
+
+#t)
+
