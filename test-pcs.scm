@@ -51,7 +51,7 @@
 `(p0 x))
 
 ; Negative emitter
-(test-check "testpcx.tex-constraint-emitter-1"
+(test-check "testpcx.tex-constraint-emitter-2"
 (constraint-emitter (noto (p x)))
 
 `(p1 x))
@@ -172,14 +172,34 @@
 #f)
 
 ;;; Check returns false
-(test-check "testpcx.tex-constraint-checker-1"
+(test-check "testpcx.tex-constraint-checker-3"
 (constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (= x 1))))))
 
 #f)
 
 ;;; Check returns true
-(test-check "testpcx.tex-constraint-checker-1"
+(test-check "testpcx.tex-constraint-checker-4"
 (constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (> x 1))))))
 
 #t)
 
+;;; ==== Testing constraint-updater ====
+;;; No matched emitter name
+(reset-program)
+(test-check "testpcx.tex-constraint-updater-1"
+(constraint-updater 'q1 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+
+`())
+
+;;; No pending emitter (length = 0)
+(test-check "testpcx.tex-constraint-updater-2"
+(constraint-updater 'p0 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+
+`())
+
+;;; Updated constraint rules
+(test-check "testpcx.tex-constraint-updater-3"
+(constraint-updater 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
+
+`((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))

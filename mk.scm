@@ -145,6 +145,34 @@
                         (= (length (cdaadr row)) 0)))
                  (append constraint-rules L)))))
 
+
+;;; The constraint gets updated when the verifier receives the values from the
+;;; emitter but is not yet ready to evaluate. So, the partial verifier is stored
+;;; as a continuation in L. The update will happen for both constraint-rule and L.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those
+;;; verifiers that are not ready to evaluate after receiving the values from the
+;;; emitter. We use a constraint constructor to complete the verifier's continuation.
+;;; Then, the remaining emitters are compiled with the update verifier via
+;;; constraint compiler.
+;;;
+;;; [ToDo] The process is almost identical to a constraint-checker.
+;;; A higher-level abstraction can refactor it.
+(define (constraint-updater emitter vals L)
+  (fold-left append `()
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [remains (cdaadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (constraint-compiler 
+             remains
+             (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (and (eq? emitter (car row))
+                        (> (length (cdaadr row)) 0)))
+                 (append constraint-rules L)))))
+
 ;;; ---- predicate constraint ----
 
 ;;; Record the procedure we produced the result.
