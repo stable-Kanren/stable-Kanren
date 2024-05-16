@@ -203,3 +203,43 @@
                                (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
 
 `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+
+;;; ==== Integrated testing ====
+;;; Integrate constraint-updater and constraint-checker
+(test-check "testpcx.tex-constraint-1"
+(constraint-checker 'p0 `(1)
+  (constraint-updater 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
+
+#t)
+
+(test-check "testpcx.tex-constraint-2"
+(constraint-checker 'p0 `(2)
+  (constraint-updater 'q1 `(1) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
+
+#f)
+
+;;; Integrate constrainto, constraint-updater, and constraint-checker
+(reset-program)
+(constrainto ((p x) (noto (q y))) ((= x 1) (= y 2)))
+
+(test-check "testpcx.tex-constraint-3"
+(constraint-checker 'p0 `(1)
+  (constraint-updater 'q1 `(2) `()))
+
+#t)
+
+;;; Integrate constrainto, local constraint rules (L), constraint-updater, and constraint-checker
+(test-check "testpcx.tex-constraint-4"
+(constraint-checker 'p0 `(1)
+  (constraint-updater 'q1 `(3) 
+                    `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
+
+#f)
+
+(test-check "testpcx.tex-constraint-5"
+(constraint-checker 'p0 `(1)
+                    `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+
+#t)
