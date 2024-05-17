@@ -81,7 +81,7 @@
 ;;;
 ;;; [ToDo] Handle the nested negative emitter like "(noto (noto (noto (p x))))".
 (define-syntax constraint-emitter
-  (syntax-rules ()
+  (syntax-rules (noto)
     [(_ (noto (g x ...)))
         `(,(sym-append-str `g "1") x ...)]
     [(_ (g x ...))
