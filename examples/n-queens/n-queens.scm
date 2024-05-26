@@ -1,3 +1,5 @@
+(source-directories '("." "../../"))
+(load "mk.scm")
 ; Example taken from s(ASP) paper
 ; (https://www.cs.nmsu.edu/ALP/wp-content/uploads/2017/04/marple_etal2017.pdf)
 ;% solve the N queens problem for a given N, returning a list of queens as Q
