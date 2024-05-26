@@ -98,6 +98,9 @@
 ;;;   ((p x) (q x))  ---> ((p y) (q z)) ((= y z))
 (define-syntax constrainto
   (syntax-rules ()
+    [(_ () (expr ...))
+      (set! constraint-rules
+        (append constraint-rules '((() (((_ _)) (and expr ...))))))]
     [(_ (g ...) (expr ...))
       (set! constraint-rules
         (append constraint-rules
@@ -141,8 +144,9 @@
                  [quote-s (eval `(quote-symbol ,vals))])
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
-                   (and (eq? emitter (car row))
-                        (= (length (cdaadr row)) 0)))
+                   (or (null? (car row))
+                       (and (eq? emitter (car row))
+                            (= (length (cdaadr row)) 0))))
                  (append constraint-rules L)))))
 
 
