@@ -37,6 +37,26 @@
 
 `())
 
+;;; If we ignore the global constraint and use run-partial to get partial results.
+;;; The global constraint p(1) :- a(1), not p(1) is not affecting the result.
+;;; Note: This is not stable model semantics expected, but it could be other
+;;; useful semantics and applications.
+(test-check "testwns.tex-pa"
+(run-partial 1 (q) (a q) )
+
+`(1))
+
+(test-check "testwns.tex-pb"
+(run-partial 1 (q) (b q) )
+
+`(2))
+
+(test-check "testwns.tex-pp"
+(run-partial 1 (q) (p q) )
+
+`(2))
+
+
 (reset-program)
 ; a(1)
 (defineo (a x)

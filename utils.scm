@@ -27,6 +27,17 @@
     `()
     (cons (car l) (get-first-n-elements (cdr l) (- n 1)))))
 
+;;; Rotate element e to the first of the list.
+; O(n) complexity.
+; If there is more than one element matched, only move to the first match.
+(define (rotate-to-first e l cmp)
+  (define (iterate lhs rhs)
+    (cond
+      [(null? rhs) lhs]
+      [(cmp e (car rhs)) (append lhs (reverse rhs))]
+      (else (iterate (cons (car rhs) lhs) (cdr rhs)))))
+  (reverse (iterate `() l)))
+
 ;;; Find bounded variables from a substitution.
 ; O(n) complexity.
 (define (find-bound-vars argv S)
@@ -76,3 +87,7 @@
 ;;; Comparison function for sorting.
 (define (compare-element lhs rhs)
   (string<? (format "~a" lhs) (format "~a" rhs)))
+
+;;; Extending a symbol with a string.
+(define (sym-append-str sym str)
+  (string->symbol (string-append (symbol->string sym) str)))

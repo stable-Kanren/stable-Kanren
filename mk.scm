@@ -5,10 +5,11 @@
 (define-syntax lambdag@
   (syntax-rules ()
     ((_ (n cfs c) e ...) (lambda (n cfs c) e ...))
-    ((_ (n cfs c : S P) e ...)
+    ((_ (n cfs c : S P L) e ...)
      (lambda (n cfs c)
       (let ([S (c->S c)]
-            [P (c->P c)])
+            [P (c->P c)]
+            [L (c->L c)])
         e ...)))))
 
 (define-syntax lambdaf@
@@ -31,9 +32,11 @@
 
 (define c->P (lambda (c) (cadr c)))
 
+(define c->L (lambda (c) (caddr c)))
+
 (define empty-s '())
 
-(define empty-c '(() ()))
+(define empty-c '(() () ()))
 
 (define negation-counter 0)
 
@@ -44,14 +47,168 @@
 (define (expand-cfs k v cfs)
   (adjoin-set (make-record k v) cfs))
 
+;;; ==== predicate constraint ====
+;;; Compile emitters and verifier as our internal constraint rule representation.
+;;; It is a key-value pair of <emitter, [emitters list, verifier]>.
+;;;
+;;; The emitter list tracks all emitters to ensure the verifier receives 
+;;; sufficient values from the emitter. Every time an emitter emits values,
+;;; it is removed from the list (through constraint-updater); when the list is
+;;; empty, the verifier has all values and is ready to verify the constraint 
+;;; through constraint-checker.
+;;;
+;;; We use the predicate (goal function) name + 0 or 1 + predicate's parameters
+;;; as the emitter name.
+;;; (p x)           ---> '(p0 x)
+;;; (noto (q y z))  ---> '(q1 y z)
+;;; 0 or 1 depends on the emitter coming from a positive(0) or negative (1) goal.
+;;;
+;;; We can only keep a unique emitter name as the key to save space. To speed up
+;;; the remove operation on the list, we put the emitter used as key at the first. 
+;;;
+(define (constraint-compiler emitters expr)
+  (remove-duplicates 
+  (map (lambda (emitter)
+        `(,(car emitter) 
+         (,(rotate-to-first emitter emitters
+              (lambda (l r) (eq? (car l) (car r))))
+          ,expr)))
+  emitters)))
+
+;;; There are two types of emitters: a negative one "(noto (p x))" and
+;;; a positive one "(p x)." We append a 1 to the negative predicate's name;
+;;; and a 0 to the positive predicate's name.
+;;;
+;;; [ToDo] Handle the nested negative emitter like "(noto (noto (noto (p x))))".
+(define-syntax constraint-emitter
+  (syntax-rules (noto)
+    [(_ (noto (g x ...)))
+        `(,(sym-append-str `g "1") x ...)]
+    [(_ (g x ...))
+        `(,(sym-append-str `g "0") x ...)]))
+
+;;; A constrainto interface for users to define constraints. The constraint has
+;;; a list of emitters and a list of verifiers.
+;;;
+;;; [ToDo] Sanity checking to ensure the verifier gets sufficient values from
+;;; the emitter and returns a boolean result. A syntax sugar to simplify encoding.
+;;; For example,
+;;;   ((q x))        ---> ((q x)) (())
+;;;   ((noto (p 1))) ---> ((noto (p x))) ((= x 1))
+;;;   ((p x) (q x))  ---> ((p y) (q z)) ((= y z))
+(define-syntax constrainto
+  (syntax-rules ()
+    [(_ () (expr ...))
+      (set! constraint-rules
+        (append constraint-rules '((() (((_ _)) (and expr ...))))))]
+    [(_ (g ...) (expr ...))
+      (set! constraint-rules
+        (append constraint-rules
+          (constraint-compiler
+            `(,(constraint-emitter g) ...)
+            '(and expr ...))))]))
+
+;;; Add a quote to a list of symbols. So, it can be evaluated as data, not code.
+;;; (eval (eq? a a)) ---> (eval (eq? 'a 'a))
+;;;
+;;; It has to be a macro to modify code as data, and it can not be a function.
+;;; It works for a list of string, number, and symbol only.
+;;; [ToDo] Add support for complex data structure.
+(define-syntax quote-symbol
+  (syntax-rules ()
+    [(_ (syms ...))
+      `('syms ...)]))
+
+;;; To wrap verifier `expr` around with values from the emitter. (Metaprogramming)
+;;; Verifer like (and (= x y) (> a b)) receives values from the emitter.
+;;; We are constructing a lambda to provide values to the expression.
+;;; [ToDo] Sanity checking to ensure (length (params ...)) = (length (values ...))
+(define-syntax constraint-constructor
+  (syntax-rules ()
+    [(_ (params ...) (values ...) expr)
+      `((lambda (params ...) expr) values ...)]))
+
+;;; The constraint is ready to check when the verifier receives the values from
+;;; the last emitter. The verifier accumulates the previous values, which are
+;;; stored in L. If the verifier only needs one emitter, it stores in constraint-rules.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those verifiers
+;;; that are ready to update after receiving the final values from the emitter.
+;;; We use constraint-constructor to complete the verifier's continuation.
+;;; Then, the verifier is ready to use eval to get the constraint checking outcome.
+(define (constraint-checker emitter vals L)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (eval (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (or (null? (car row))
+                       (and (eq? emitter (car row))
+                            (= (length (cdaadr row)) 0))))
+                 (append constraint-rules L)))))
+
+
+;;; The constraint gets updated when the verifier receives the values from the
+;;; emitter but is not yet ready to evaluate. So, the partial verifier is stored
+;;; as a continuation in L. The update will happen for both constraint-rule and L.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those
+;;; verifiers that are not ready to evaluate after receiving the values from the
+;;; emitter. We use a constraint constructor to complete the verifier's continuation.
+;;; Then, the remaining emitters are compiled with the update verifier via
+;;; constraint compiler.
+;;;
+;;; [ToDo] The process is almost identical to a constraint-checker.
+;;; A higher-level abstraction can refactor it.
+(define (constraint-updater emitter vals L)
+  (fold-left append `()
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [remains (cdaadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (constraint-compiler 
+             remains
+             (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (and (eq? emitter (car row))
+                        (> (length (cdaadr row)) 0)))
+                 (append constraint-rules L)))))
+
+;;; ---- predicate constraint ----
+
 ;;; Record the procedure we produced the result.
 (define (ext-p name argv)
-  (lambdag@(n cfs c : S P)
+  (lambdag@(n cfs c : S P L)
     ; At this point, all arguments have a substitution.
-    (let ((key (map (lambda (arg)
-                    (walk arg S)) argv) ))
-    ; So the partial result will record the predicate with actual values.
-    (list S (adjoin-set (make-record (list name key) n) P)))))
+    (let* ([key (map (lambda (arg)
+                     (walk arg S)) argv)]
+           [result (element-of-set? (list name key) P)]
+           [emitter (sym-append-str name
+                (number->string (modulo n 2)))])
+    ; The query interface will also query the same goal multiple times with
+    ; different variables. We use "<" to distinguish different variables,
+    ; if it is "<=" we are allowing different variables to have the same values.
+    ;
+    ; [ToDo] This semantics is debatable. Using "<=" is closer to the nature of
+    ; relational programming, where if the query variables didn't distinguish
+    ; from each other, they should be allowed to have the same values.
+    ; Currently, allowing the same values broadens the search scope and takes
+    ; longer to produce results. So, we use "<" for now and will come back and
+    ; adjust it after we have a heuristic search.
+    (if (and result (< n (get-value result)))
+      ; We do not check constraints if we had the truth value.
+      (list S (adjoin-set (make-record (list name key) n) P) L)
+      ; Ideally, these emitter should "attach" to the goal function in the "run"
+      ; interface, so that we don't have to look it up here again and again.
+      (if (constraint-checker emitter key L)
+        ; Violated constraint terminates the search.
+        (mzero)
+        ; Otherwise, record predicate with truth value.
+        (list S (adjoin-set (make-record (list name key) n) P) 
+          (append L (constraint-updater emitter key L))))))))
 
 (define walk
   (lambda (u S)
@@ -161,7 +318,7 @@
           ; priority ordering algorithm can turn the BFS into DFS in a few
           ; iterations on stratified programs, we saved extra computation on
           ; determining whether the input program is stratified.
-          (lambdag@ (negation-counter cfs c : S P)
+          (lambdag@ (negation-counter cfs c : S P L)
             (if (null? 
                 ; `check-all-rules` computes all future answers, but we only
                 ; need to find one to make sure the partial answer is good.
@@ -183,6 +340,16 @@
               (mzero)
               (cons (reify x S) '()))))
           negation-counter call-frame-stack empty-c))))))
+
+(define-syntax run-partial
+  (syntax-rules ()
+    ((_ n (x) g0 g ...)
+     (take n
+       (lambdaf@ ()
+         ((fresh (x) g0 g ... 
+          (lambdag@ (negation-counter cfs c : S P L)
+              (cons (reify x S) '())))
+          negation-counter call-frame-stack empty-c))))))
  
 (define take
   (lambda (n f)
@@ -198,12 +365,12 @@
 
 (define ==
   (lambda (u v)
-    (lambdag@ (n cfs c : S P)
+    (lambdag@ (n cfs c : S P L)
       (if (even? n)
         (cond
           [(unify u v S) => 
             (lambda (s+) 
-              (unit (list s+ P)))]
+              (unit (list s+ P L)))]
           [else (mzero)])
         (cond
           [(unify u v S) => 
@@ -229,14 +396,14 @@
       ; Removing all vars from (x ...), get the remaining temporary variables.
       (let ([var-list (remove-var-from-list (list x ...) vars)])
         (define (iterate-values values)
-          (lambdag@ (n cfs c : S P)
+          (lambdag@ (n cfs c : S P L)
             (if (null? values)
               c
               (inc (bind* n cfs
                   ; The remaining temporary variables need "fresh-t" again.
                 ((fresh-t (var-list) g ...) n cfs
                   ; So we can extend vars with all variables by ourselves.
-                  (list (ext-s-for-all-vars vars (car values) S) P))
+                  (list (ext-s-for-all-vars vars (car values) S) P L))
                   (iterate-values (cdr values)))))))
         iterate-values)]))
 
@@ -269,7 +436,7 @@
           ; So, (== tmp bounded-vars) is the same as (== q `(,x ,y)).
           (== tmp bounded-vars)
           ; Eventually, we reify the tmp variable to get all values.
-          (lambdag@ (dummy_n dummy_cfs c : S P)
+          (lambdag@ (dummy_n dummy_cfs c : S P L)
             (cons (reify tmp S) '())))
           negation-counter cfs s)))]))
 
@@ -329,12 +496,12 @@
      (conde 
        [g0] 
        ;;; Before executing "g0", we saved the current context.
-       [(lambdag@ (n cfs c : S P)
+       [(lambdag@ (n cfs c : S P L)
           ((fresh ()
             ; Run g0
             (noto g0)
             ;;; After executing "g0", we are comparing the two context.
-            (lambdag@ (nn ff cc : SS PP)
+            (lambdag@ (nn ff cc : SS PP LL)
                      ; Diff the length of two substitutions.
               (let* ([diff (- (length SS) (length S))]
                      ; Use the diff to get difference of the two lists.
@@ -470,7 +637,7 @@
 (define-syntax project
   (syntax-rules ()
     ((_ (x ...) g g* ...)
-     (lambdag@ (n cfs c : S P)
+     (lambdag@ (n cfs c : S P L)
        (let ((x (walk* x S)) ...)
          ((fresh () g g* ...) n cfs c))))))
 
@@ -484,9 +651,13 @@
       (g succeed)
       ((== #f #f) fail))))
 
+; (name[0|1], ((list (name[0|1] params) ...), expr))
+(define constraint-rules `())
 (define program-rules `())
 
-(define reset-program (lambda () (set! program-rules `())))
+(define reset-program (lambda ()
+  (set! constraint-rules `())
+  (set! program-rules `())))
 
 ;;; Fetch one rule from the program rules set until the set is empty.
 (define (fetch-rule rules-set)
@@ -519,14 +690,14 @@
       ((fresh (tmp)
         (apply (eval goal) vars)
         (== tmp vars)
-        (lambdag@ (n f c : S P)
+        (lambdag@ (n f c : S P L)
           (cons (reify tmp S) '())))
         ground-program call-frame-stack empty-c))))))
 
 ;;; For a normal program, we need to check all the rules, especially those with 
 ;;; negation literals inside. So that we make sure we find a stable model.
 (define (check-all-rules rules-set x)
-  (lambdag@ (dummy frame final-c : S P)
+  (lambdag@ (dummy frame final-c : S P L)
     (let ((rule (fetch-rule rules-set)))
       (if (and rule #t)
         ; [ToDo] Handle the propositional case here.
@@ -574,7 +745,7 @@
       (define name (lambda (params ...)
         ;;; Obtain a list of argument variables.
         (let ([argv (list params ...)])
-        (lambdag@ (n cfs c : S P)
+        (lambdag@ (n cfs c : S P L)
           ;;; Concrete the variables to values.
           ;;; If the variable has a substitution it will be replaced with a 
           ;;; value, otherwise it will be the parameter's name.
