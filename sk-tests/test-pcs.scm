@@ -1,3 +1,4 @@
+(source-directories '("." "../"))
 (load "mktests.scm")
 
 ;;; Testing Predicate Constraint System
