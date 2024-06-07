@@ -177,37 +177,6 @@
 
 ;;; ---- predicate constraint ----
 
-;;; Record the procedure we produced the result.
-(define (ext-p name argv)
-  (lambdag@(n cfs c : S P L)
-    ; At this point, all arguments have a substitution.
-    (let* ([key (map (lambda (arg)
-                     (walk arg S)) argv)]
-           [result (element-of-set? (list name key) P)]
-           [emitter (sym-append-str name
-                (number->string (modulo n 2)))])
-    ; The query interface will also query the same goal multiple times with
-    ; different variables. We use "<" to distinguish different variables,
-    ; if it is "<=" we are allowing different variables to have the same values.
-    ;
-    ; [ToDo] This semantics is debatable. Using "<=" is closer to the nature of
-    ; relational programming, where if the query variables didn't distinguish
-    ; from each other, they should be allowed to have the same values.
-    ; Currently, allowing the same values broadens the search scope and takes
-    ; longer to produce results. So, we use "<" for now and will come back and
-    ; adjust it after we have a heuristic search.
-    (if (and result (< n (get-value result)))
-      ; We do not check constraints if we had the truth value.
-      (list S (adjoin-set (make-record (list name key) n) P) L)
-      ; Ideally, these emitter should "attach" to the goal function in the "run"
-      ; interface, so that we don't have to look it up here again and again.
-      (if (constraint-checker emitter key L)
-        ; Violated constraint terminates the search.
-        (mzero)
-        ; Otherwise, record predicate with truth value.
-        (list S (adjoin-set (make-record (list name key) n) P) 
-          (append L (constraint-updater emitter key L))))))))
-
 (define walk
   (lambda (u S)
     (cond
