@@ -18,6 +18,136 @@
             ...))
 ))
 
+;;; ==== predicate constraint ====
+;;; Compile emitters and verifier as our internal constraint rule representation.
+;;; It is a key-value pair of <emitter, [emitters list, verifier]>.
+;;;
+;;; The emitter list tracks all emitters to ensure the verifier receives 
+;;; sufficient values from the emitter. Every time an emitter emits values,
+;;; it is removed from the list (through constraint-updater); when the list is
+;;; empty, the verifier has all values and is ready to verify the constraint 
+;;; through constraint-checker.
+;;;
+;;; We use the predicate (goal function) name + 0 or 1 + predicate's parameters
+;;; as the emitter name.
+;;; (p x)           ---> '(p0 x)
+;;; (noto (q y z))  ---> '(q1 y z)
+;;; 0 or 1 depends on the emitter coming from a positive(0) or negative (1) goal.
+;;;
+;;; We can only keep a unique emitter name as the key to save space. To speed up
+;;; the remove operation on the list, we put the emitter used as key at the first. 
+;;;
+(define (constraint-compiler emitters expr)
+  (remove-duplicates 
+  (map (lambda (emitter)
+        `(,(car emitter) 
+         (,(rotate-to-first emitter emitters
+              (lambda (l r) (eq? (car l) (car r))))
+          ,expr)))
+  emitters)))
+
+;;; There are two types of emitters: a negative one "(noto (p x))" and
+;;; a positive one "(p x)." We append a 1 to the negative predicate's name;
+;;; and a 0 to the positive predicate's name.
+;;;
+;;; [ToDo] Handle the nested negative emitter like "(noto (noto (noto (p x))))".
+(define-syntax constraint-emitter
+  (syntax-rules (noto)
+    [(_ (noto (g x ...)))
+        `(,(sym-append-str `g "1") x ...)]
+    [(_ (g x ...))
+        `(,(sym-append-str `g "0") x ...)]))
+
+;;; A constrainto interface for users to define constraints. The constraint has
+;;; a list of emitters and a list of verifiers.
+;;;
+;;; [ToDo] Sanity checking to ensure the verifier gets sufficient values from
+;;; the emitter and returns a boolean result. A syntax sugar to simplify encoding.
+;;; For example,
+;;;   ((q x))        ---> ((q x)) (())
+;;;   ((noto (p 1))) ---> ((noto (p x))) ((= x 1))
+;;;   ((p x) (q x))  ---> ((p y) (q z)) ((= y z))
+(define-syntax constrainto
+  (syntax-rules ()
+    [(_ () (expr ...))
+      (display "[Warning] At least one emitter is needed in constrainto!\n")]
+    [(_ (g ...) (expr ...))
+      (set! constraint-rules
+        (append constraint-rules
+          (constraint-compiler
+            `(,(constraint-emitter g) ...)
+            '(and expr ...))))]))
+
+;;; Add a quote to a list of symbols. So, it can be evaluated as data, not code.
+;;; (eval (eq? a a)) ---> (eval (eq? 'a 'a))
+;;;
+;;; It has to be a macro to modify code as data, and it can not be a function.
+;;; It works for a list of string, number, and symbol only.
+;;; [ToDo] Add support for complex data structure.
+(define-syntax quote-symbol
+  (syntax-rules ()
+    [(_ (syms ...))
+      `('syms ...)]))
+
+;;; To wrap verifier `expr` around with values from the emitter. (Metaprogramming)
+;;; Verifer like (and (= x y) (> a b)) receives values from the emitter.
+;;; We are constructing a lambda to provide values to the expression.
+;;; [ToDo] Sanity checking to ensure (length (params ...)) = (length (values ...))
+(define-syntax constraint-constructor
+  (syntax-rules ()
+    [(_ (params ...) (values ...) expr)
+      `((lambda (params ...) expr) values ...)]))
+
+;;; The constraint is ready to check when the verifier receives the values from
+;;; the last emitter. The verifier accumulates the previous values, which are
+;;; stored in L. If the verifier only needs one emitter, it stores in constraint-rules.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those verifiers
+;;; that are ready to update after receiving the final values from the emitter.
+;;; We use constraint-constructor to complete the verifier's continuation.
+;;; Then, the verifier is ready to use eval to get the constraint checking outcome.
+(define (constraint-checker emitter vals L)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (eval (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (and (eq? emitter (car row))
+                        (= (length (cdaadr row)) 0)))
+                 (append constraint-rules L)))))
+
+
+;;; The constraint gets updated when the verifier receives the values from the
+;;; emitter but is not yet ready to evaluate. So, the partial verifier is stored
+;;; as a continuation in L. The update will happen for both constraint-rule and L.
+;;;
+;;; Therefore, we first combine constraint rules with L to filter out those
+;;; verifiers that are not ready to evaluate after receiving the values from the
+;;; emitter. We use a constraint constructor to complete the verifier's continuation.
+;;; Then, the remaining emitters are compiled with the update verifier via
+;;; constraint compiler.
+;;;
+;;; [ToDo] The process is almost identical to a constraint-checker.
+;;; A higher-level abstraction can refactor it.
+(define (constraint-updater emitter vals L)
+  (fold-left append `()
+    (map (lambda (row)
+           (let ([params (cdr (caaadr row))]
+                 [exprs (cadadr row)]
+                 [remains (cdaadr row)]
+                 [quote-s (eval `(quote-symbol ,vals))])
+           (constraint-compiler 
+             remains
+             (constraint-constructor ,params ,quote-s ,exprs))))
+         (filter (lambda (row)
+                   (and (eq? emitter (car row))
+                        (> (length (cdaadr row)) 0)))
+                 (append constraint-rules L)))))
+
+;;; ---- predicate constraint ----
+
 ;;; Record the procedure we produced the result.
 (define (ext-p name argv)
   (lambdag@(n cfs c : S P L)
