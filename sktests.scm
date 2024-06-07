@@ -2,3 +2,4 @@
 (load "mktests.scm")
 (load "test-wns.scm")
 (load "test-pcs.scm")
+(load "test-syntax.scm")
