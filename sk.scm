@@ -21,25 +21,20 @@
 ;;; Ignore the negative literal in the program to ground the variable.
 ;;; This gives us a superset of the variable's values.
 (define-syntax ignore-negation
-  (syntax-rules (conde)
+  (syntax-rules (noto conde fresh)
     ((_ (conde (g0 g ...) (g1 g^ ...) ...))
         (conde [(ignore-negation g0 g ...)]
                [(ignore-negation g1 g^ ...)]
                ...))
     ((_ (fresh (x ...) g0 g ...))
         (fresh (x ...) (ignore-negation g0 g ...)))
-    ((_ (g0 ...)) 
-      (let ((name (car `(g0 ...))))
-        (if (equal? name 'noto)
-            succeed
-            (g0 ...))))
-    ((_ (g0 ...) (g1 ...) ...) 
-      (let ((name (car `(g0 ...))))
-        (fresh () 
-          (if (equal? name 'noto)
-            succeed
-            (g0 ...))
-        (ignore-negation (g1 ...) ...))))
+    ((_ (noto g)) succeed)
+    ((_ g) g)
+    ((_ g0 g1 ...)
+      (fresh ()
+    	(ignore-negation g0)
+    	(ignore-negation g1)
+    	...))
     ((_ g) g)))
 
 ;;; ==== predicate constraint ====
