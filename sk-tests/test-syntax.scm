@@ -2,6 +2,7 @@
 (load "testdefs.scm")
 (load "sk.scm")
 
+;;; ==== Testing has-negation? ====
 ;;; One predicate
 (test-check "sktests.tex-has-negation?-0t"
 (has-negation? (noto (p x)))
@@ -80,3 +81,43 @@
 (has-negation? (conde [(fresh (x) (q x) succeed)] [fail]))
 
 #f)
+
+;;; ==== Testing ignore-negation ====
+(test-check "sktests.tex-ignore-negation-1"
+(run* (q) 
+  (ignore-negation
+    (conde [(fresh (x) (== q 1) (noto succeed) (== x 2))])))
+
+`(1))
+
+(test-check "sktests.tex-ignore-negation-2"
+(run* (q)
+  (ignore-negation
+    (conde [(fresh (x) (== q 1) (noto succeed) (== x 2))]
+           [(== q 2) succeed])))
+
+`(2 1))
+
+(test-check "sktests.tex-ignore-negation-3"
+(run* (q)
+  (ignore-negation
+    (conde [(fresh (x) (== q 1) (noto succeed) (== x 2))]
+           [(== q 3) succeed])))
+
+`(3 1))
+
+(test-check "sktests.tex-ignore-negation-4"
+(run* (q)
+  (ignore-negation
+    (conde [(fresh (x) (== q 1) (noto succeed) (== x 2))]
+           [(noto (== q 3)) succeed])))
+
+`(_.0 1))
+
+(test-check "sktests.tex-ignore-negation-5"
+(run* (q)
+  (ignore-negation
+    (conde [(fresh (x) (== q 1) (noto succeed) (== x 2))]
+           [(noto (== q 3)) (== q 4)])))
+
+`(4 1))
