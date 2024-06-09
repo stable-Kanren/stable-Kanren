@@ -208,10 +208,10 @@
   (syntax-rules ()
     ((_ (name params ...) exp ...)
       (begin
-      ;;; Add rule to program-rules set.
-      (set! program-rules (adjoin-set (make-record `name 
+      ;;; Add rule to global-checking-rules set.
+      (set! global-checking-rules (adjoin-set (make-record `name 
                                         (length (list `params ...)))
-                            program-rules))
+                            global-checking-rules))
       ;;; Define a goal function with the original rules "exp ...", and the 
       ;;; complement rules "complement exp ..."
       (define name (lambda (params ...)

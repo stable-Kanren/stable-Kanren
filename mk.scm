@@ -173,7 +173,7 @@
                 ; help reduce the fan-out.
                 (take 1 
                   (lambdaf@ ()
-                    ((check-all-rules program-rules x) negation-counter cfs c))))
+                    ((check-all-rules global-checking-rules x) negation-counter cfs c))))
               (mzero)
               (cons (reify x S) '()))))
           negation-counter call-frame-stack empty-c))))))
@@ -466,11 +466,11 @@
 
 ; (name[0|1], ((list (name[0|1] params) ...), expr))
 (define constraint-rules `())
-(define program-rules `())
+(define global-checking-rules `())
 
 (define reset-program (lambda ()
   (set! constraint-rules `())
-  (set! program-rules `())))
+  (set! global-checking-rules `())))
 
 ;;; Fetch one rule from the program rules set until the set is empty.
 (define (fetch-rule rules-set)
