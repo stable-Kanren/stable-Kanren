@@ -1,3 +1,8 @@
+(source-directories '("." "./sk-tests/" "../"))
+(load "testdefs.scm")
+(load "sk.scm")
+
+(reset-program)
 (defineo (conso a d p)
     (== (cons a d) p))
 
@@ -17,4 +22,7 @@
       (conso h acc acc1)
       (rev-acco t acc1 sx))]))
 
+(test-check "sktests.tex-revo"
 (run 1 (q) (revo '() '()))
+
+`(_.0))

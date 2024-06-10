@@ -208,10 +208,9 @@
   (syntax-rules ()
     ((_ (name params ...) exp ...)
       (begin
-      ;;; Add rule to global-checking-rules set.
-      (set! global-checking-rules (adjoin-set (make-record `name 
-                                        (length (list `params ...)))
-                            global-checking-rules))
+      ;;; Add rule to global-checking-rules set if there is a negation in it.
+      (if (has-negation? exp ...)
+        (add-global-checking-rules! `name (length (list `params ...))))
       ;;; Define a goal function with the original rules "exp ...", and the 
       ;;; complement rules "complement exp ..."
       (define name (lambda (params ...)

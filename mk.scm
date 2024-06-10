@@ -466,11 +466,21 @@
 
 ; (name[0|1], ((list (name[0|1] params) ...), expr))
 (define constraint-rules `())
+; [(name, arity) ...]
 (define global-checking-rules `())
 
 (define reset-program (lambda ()
   (set! constraint-rules `())
   (set! global-checking-rules `())))
+
+;;; Getter and Setter of global-checking-rules.
+;;; [ToDo] Move data structure to a stand-alone file and add test cases.
+(define (add-global-checking-rules! k v)
+  (set! global-checking-rules
+    (adjoin-set (make-record k v) global-checking-rules)))
+
+(define (get-global-checking-rules k)
+  (element-of-set? k global-checking-rules))
 
 ;;; Fetch one rule from the program rules set until the set is empty.
 (define (fetch-rule rules-set)
