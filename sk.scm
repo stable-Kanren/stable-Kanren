@@ -77,6 +77,29 @@
     [(_ (g x ...))
         `(,(sym-append-str `g "0") x ...)]))
 
+;;; The emitters (goal functions) are controlled by the constraintos. In this
+;;; case, they become a global constraint that requires checking no matter they
+;;; have been reached or not.
+(define (emitter-global-checking emitters)
+  (map (lambda (row)
+         ; This is not thread safe, same as other exclamation mark operators.
+         (add-global-checking-rules! (car row) (cadr row)))
+       (filter (lambda (row)
+                 (not (get-global-checking-rules (car row))))
+               (remove-duplicates emitters))))
+
+;;; It extracts the emitter name and its arity.
+;;; (noto (p x y))  --->  '(p 2)
+;;; (q x y z)       --->  '(q 3)
+(define-syntax emitter-signature
+  (syntax-rules (noto)
+    [(_ (noto (g x ...)))
+        `((g ,(length `(x ...))))]
+    [(_ (g x ...))
+        `((g, (length `(x ...))))]
+    [(_ g ...)
+        `(,(car (emitter-signature g)) ...)]))
+
 ;;; A constrainto interface for users to define constraints. The constraint has
 ;;; a list of emitters and a list of verifiers.
 ;;;
