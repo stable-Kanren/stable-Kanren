@@ -114,11 +114,13 @@
     [(_ () (expr ...))
       (display "[Warning] At least one emitter is needed in constrainto!\n")]
     [(_ (g ...) (expr ...))
+      (begin
+      (emitter-global-checking (emitter-signature g ...))
       (set! constraint-rules
         (append constraint-rules
           (constraint-compiler
             `(,(constraint-emitter g) ...)
-            '(and expr ...))))]))
+            '(and expr ...)))))]))
 
 ;;; Add a quote to a list of symbols. So, it can be evaluated as data, not code.
 ;;; (eval (eq? a a)) ---> (eval (eq? 'a 'a))
@@ -231,8 +233,9 @@
   (syntax-rules ()
     ((_ (name params ...) exp ...)
       (begin
-      ;;; Add rule to global-checking-rules set if there is a negation in it.
-      (if (has-negation? exp ...)
+      ;;; If a rule has a negation in it and hasn't been added by `constrainto,`
+      ;;; add it to the global-checking-rules set.
+      (if (and (has-negation? exp ...) (not (get-global-checking-rules `name)))
         (add-global-checking-rules! `name (length (list `params ...))))
       ;;; Define a goal function with the original rules "exp ...", and the 
       ;;; complement rules "complement exp ..."
