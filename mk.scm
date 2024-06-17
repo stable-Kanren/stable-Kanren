@@ -173,6 +173,9 @@
                 ; help reduce the fan-out.
                 (take 1 
                   (lambdaf@ ()
+                    ; [ToDo] In real-world applications, multiple programs may
+                    ; load into the same environment, we can filter out the
+                    ; rules reachable in the query to check.
                     ((check-all-rules global-checking-rules x) negation-counter cfs c))))
               (mzero)
               (cons (reify x S) '()))))
