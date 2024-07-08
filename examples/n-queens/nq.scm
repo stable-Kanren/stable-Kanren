@@ -44,11 +44,13 @@
  (conde
    [(num x) (num y) (noto (queen x y))]))
 
-(constrainto ((queen x y) (queen u v)) ((> x u)))
+; Top-down query optimization constraint, this is an engineering hack, not
+; stable model semantics. Other bottom-up solver won't produce the right answer.
+; (constrainto ((queen x y) (queen u v)) ((> x u)))
 
-(constrainto ((queen x y) (queen u v)) ((= x u)))
+(constrainto ((queen x y) (queen u v)) ((= x u) (not (= y v))))
 
-(constrainto ((queen x y) (queen u v)) ((= y v)))
+(constrainto ((queen x y) (queen u v)) ((= y v) (not (= x u))))
 
 (constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v)))))
 
