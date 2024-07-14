@@ -44,15 +44,29 @@
  (conde
    [(num x) (num y) (noto (queen x y))]))
 
-; Top-down query optimization constraint, this is an engineering hack, not
-; stable model semantics. Other bottom-up solver won't produce the right answer.
-; (constrainto ((queen x y) (queen u v)) ((> x u)))
-
+; :- queen(X, Y), queen(U, V), X = U, Y != V.
 (constrainto ((queen x y) (queen u v)) ((= x u) (not (= y v))))
 
+; :- queen(X, Y), queen(U, V), Y = V, X != U.
 (constrainto ((queen x y) (queen u v)) ((= y v) (not (= x u))))
 
-(constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v)))))
+; :- queen(X, Y), queen(U, V), abs(X - U) = abs(Y - V), X != U, Y != V.
+(constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v))) (not (= x u)) (not (= y v))))
+
+; Solver specified rules (Not stable model semantics)
+; Top-down query optimization constraint, this is an engineering hack, not
+; stable model semantics. Other bottom-up solver won't produce the right answer.
+; :- queen(X, Y), queen(U, V), X > U.
+; (constrainto ((queen x y) (queen u v)) ((> x u)))
+
+; :- queen(X, Y), queen(U, V), X = U.
+; (constrainto ((queen x y) (queen u v)) ((= x u)))
+
+; :- queen(X, Y), queen(U, V), Y = V.
+; (constrainto ((queen x y) (queen u v)) ((= y v)))
+
+; :- queen(X, Y), queen(U, V), abs(X - U) = abs(Y - V).
+; (constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v)))))
 
 ; Adding a dummy head to predicate constraints, this also requires changes
 ; in resolution.
