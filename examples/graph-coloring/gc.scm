@@ -78,9 +78,11 @@
 ; % Top-down solver rules, this is an engineering hack, not stable model
 ; semantics. Other bottom-up solver won't produce the right answer.
 ; % Solving heuristic, node ordering.
+; :- assign(N1, C1), assign(N2, C2), N1 > N2.
 ; (constrainto ((assign n1 c1) (assign n2 c2)) ((> n1 n2)))
 
 ; % Remove duplicated answers in top-down query.
+; :- assign(N1, C1), assign(N2, C2), N1 = N2, C1 = C2.
 ; (constrainto ((assign n1 c1) (assign n2 c2)) ((= n1 n2) (eq? c1 c2)))
 ; So they combined as one rule.
 ; (constrainto ((assign n1 c1) (assign n2 c2)) ((= n1 n2)))

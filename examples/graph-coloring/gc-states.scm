@@ -51,7 +51,7 @@
 
 ; % One node can't take more than one color. (Upper bound)
 ; :- assign(N, C1), assign(N, C2), C1 != C2.
-(constrainto ((assign n1 c1) (assign n2 c2)) ((eq? n1 n2)))
+(constrainto ((assign n1 c1) (assign n2 c2)) ((eq? n1 n2) (not (eq? c1 c2))))
 
 ; % One node must take one color. (Lower bound)
 ; :- not assign(N, r), not assign(N, g), not assign(N, b), node(N).
@@ -70,9 +70,13 @@
 ; :- edge(N, M), assign(N, C), assign(M, C).
 (constrainto ((neighbors x y) (assign n1 c1) (assign n2 c2)) ((eq? x n1) (eq? y n2) (eq? c1 c2)))
 
-; % Top-down solver rules.
+; Solver specified rules (Not stable model semantics)
+; % Top-down solver rules, this is an engineering hack, not stable model
+; semantics. Other bottom-up solver won't produce the right answer.
 ; % Solving heuristic, node ordering.
+; :- assign(N1, C1), assign(N2, C2), N1 > N2.
 (constrainto ((assign n1 c1) (assign n2 c2)) ((> (symbol-hash n1) (symbol-hash n2))))
 
 ; % Remove duplicated answers in top-down query.
-; (constrainto ((assign n1 c1) (assign n2 c2)) ((eq? n1 n2) (eq? c1 c2)))
+; :- assign(N1, C1), assign(N2, C2), N1 = N2, C1 = C2.
+(constrainto ((assign n1 c1) (assign n2 c2)) ((eq? n1 n2) (eq? c1 c2)))
