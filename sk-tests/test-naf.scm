@@ -167,3 +167,12 @@
 `((a c) (a d) (a e) (a h) (a i) (a k) (b c) (b d) (b e) (c c)
   (c d) (c e) (d c) (d d) (d e) (e c) (e d) (e e) (f h) (f i)
   (f k) (g h) (g i) (g k) (h h) (h i) (i h) (i i)))
+
+; For stratified negation, using `run-partial` is faster to get the result.
+(test-check "testnaf.tex-10f"
+(sort compare-element (remove-duplicates 
+  (run-partial #f (q) (fresh (x y) (fullyReduce x y) (== q `(,x ,y))) )))
+
+`((a c) (a d) (a e) (a h) (a i) (a k) (b c) (b d) (b e) (c c)
+  (c d) (c e) (d c) (d d) (d e) (e c) (e d) (e e) (f h) (f i)
+  (f k) (g h) (g i) (g k) (h h) (h i) (i h) (i i)))
