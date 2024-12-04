@@ -1,5 +1,5 @@
 (source-directories '("." "../../"))
-(load "mk.scm")
+(load "sk.scm")
 
 ; vertex(0).
 ; vertex(1).

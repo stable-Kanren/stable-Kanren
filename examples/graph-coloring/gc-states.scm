@@ -1,5 +1,5 @@
 (source-directories '("." "../../"))
-(load "mk.scm")
+(load "sk.scm")
 ; Problem instances.
 ; A graph with vertices and edges G = <V, E>.
 (defineo (node x)
