@@ -64,7 +64,7 @@
   (constrainto () ())
   constraint-rules))
 
-`((() (((_ _)) (and)))))
+`((() (((_)) (and)))))
 
 ;;; No verifier
 (reset-program)
