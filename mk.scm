@@ -99,9 +99,7 @@
 (define-syntax constrainto
   (syntax-rules ()
     [(_ () (expr ...))
-      ; [ToDo] Evaluate immediately and set the global flag.
-      (set! constraint-rules
-        (append constraint-rules '((() (((_)) (and expr ...))))))]
+      (display "[Warning] At least one emitter is needed in constrainto!\n")]
     [(_ (g ...) (expr ...))
       (set! constraint-rules
         (append constraint-rules
@@ -128,21 +126,6 @@
   (syntax-rules ()
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
-
-;;; The global constraint is always ready to check with no emitter needed.
-;;; It simply runs the boolean expressions defined by `constrainto`.
-;;;
-;;; Therefore, it can be checked globally before running the query in `take`.
-(define (constraint-global-checker)
-  (fold-left (lambda (l r) (or l r)) #f
-    (map (lambda (row)
-           (let ([params (cdr (caaadr row))]
-                 [exprs (cadadr row)]
-                 [quote-s `()])
-           (eval (constraint-constructor ,params ,quote-s ,exprs))))
-         (filter (lambda (row)
-                   (null? (car row)))
-                 constraint-rules))))
 
 ;;; The constraint is ready to check when the verifier receives the values from
 ;;; the last emitter. The verifier accumulates the previous values, which are
@@ -368,8 +351,7 @@
  
 (define take
   (lambda (n f)
-    ; [ToDo] Evaluate immediately in `constrainto` and read the global flag.
-    (if (or (constraint-global-checker) (and n (zero? n)))
+    (if (and n (zero? n))
       '()
       (case-inf (f)
         (() '())
