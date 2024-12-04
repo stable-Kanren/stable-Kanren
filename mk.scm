@@ -99,8 +99,7 @@
 (define-syntax constrainto
   (syntax-rules ()
     [(_ () (expr ...))
-      (set! constraint-rules
-        (append constraint-rules '((() (((_ _)) (and expr ...))))))]
+      (display "[Warning] At least one emitter is needed in constrainto!\n")]
     [(_ (g ...) (expr ...))
       (set! constraint-rules
         (append constraint-rules
@@ -144,9 +143,8 @@
                  [quote-s (eval `(quote-symbol ,vals))])
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
-                   (or (null? (car row))
-                       (and (eq? emitter (car row))
-                            (= (length (cdaadr row)) 0))))
+                   (and (eq? emitter (car row))
+                        (= (length (cdaadr row)) 0)))
                  (append constraint-rules L)))))
 
 
@@ -353,7 +351,7 @@
  
 (define take
   (lambda (n f)
-    (if (and n (zero? n)) 
+    (if (and n (zero? n))
       '()
       (case-inf (f)
         (() '())
