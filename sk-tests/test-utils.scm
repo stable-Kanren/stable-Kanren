@@ -1,4 +1,6 @@
-(load "mktests.scm")
+(source-directories '("." "./sk-tests/" "../"))
+(load "testdefs.scm")
+(load "sk.scm")
 
 ;;; ==== Testing rotate-to-first ====
 ; Empty list

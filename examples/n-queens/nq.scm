@@ -1,5 +1,5 @@
 (source-directories '("." "../../"))
-(load "mk.scm")
+(load "sk.scm")
 
 (defineo (num x)
  (conde
