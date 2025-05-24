@@ -211,6 +211,17 @@
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
 
+;;; To propagate constraints using the values from the emitter. It selects an
+;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
+;;; to wrap the constraint handler (`exprs`). Returning a list of values,
+;;; parameters, constraint handler, and remaining constraints (`remains`).
+(define (constraint-propagator emitter row vals)
+  (let* ([quote-s (eval `(quote-symbol ,vals))]
+         [params (cdr (caaadr row))]
+         [exprs (cadadr row)]
+         [remains (cdaadr row)])
+  `(,quote-s ,params ,exprs ,remains)))
+
 ;;; The constraint is ready to check when the verifier receives the values from
 ;;; the last emitter. The verifier accumulates the previous values, which are
 ;;; stored in L. If the verifier only needs one emitter, it stores in constraint-rules.
@@ -222,9 +233,10 @@
 (define (constraint-checker emitter vals L)
   (fold-left (lambda (l r) (or l r)) #f
     (map (lambda (row)
-           (let ([params (cdr (caaadr row))]
-                 [exprs (cadadr row)]
-                 [quote-s (eval `(quote-symbol ,vals))])
+           (let* ([result (constraint-propagator emitter row vals)]
+                  [quote-s (car result)]
+                  [params (cadr result)]
+                  [exprs (caddr result)])
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
                    (and (eq? emitter (car row))
@@ -247,10 +259,11 @@
 (define (constraint-updater emitter vals L)
   (fold-left append `()
     (map (lambda (row)
-           (let ([params (cdr (caaadr row))]
-                 [exprs (cadadr row)]
-                 [remains (cdaadr row)]
-                 [quote-s (eval `(quote-symbol ,vals))])
+           (let* ([result (constraint-propagator emitter row vals)]
+                  [quote-s (car result)]
+                  [params (cadr result)]
+                  [exprs (caddr result)]
+                  [remains (cadddr result)])
            (constraint-compiler 
              remains
              (constraint-constructor ,params ,quote-s ,exprs))))
