@@ -157,7 +157,7 @@
             ; Performance optimization. If the input program is stratified, we 
             ; don't perform the additional non-monotonic resolution.
             ; [ToDo] This works at the syntax level only; add runtime level analysis later.
-            ; If the input program has constraint, it's a normal program.
+            ; If the input program has constraints, it's a normal program.
             (if (and (or (not (stratified?))
                          (constrained?))
                 (null? 
