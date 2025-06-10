@@ -123,7 +123,7 @@
 `(4 1))
 
 
-;;; ==== Testing positive and negative twins ====
+;;; ==== Testing positive and negative twins (body) ====
 (test-check "sktests.tex-positive-twin-eval-unification"
 (run* (q) (positive-twin (== 1 0)))
 
@@ -448,3 +448,186 @@
   (q x) (r y)))))
 
 '(fresh () (negative-twin (q x)) (negative-twin (r y))))
+
+
+;;; ==== Testing positive and negative twins (head) ====
+; Define a goal function (propositional and predicate), query p+ and p-.
+(reset-program)
+(defineo (p)
+  succeed)
+(test-check "sktests.tex-positive-twin-definition-propositional"
+(run 1 (q) (p+))
+
+`(_.0))
+
+(test-check "sktests.tex-negative-twin-definition-propositional"
+(run 1 (q) (p-))
+
+`(_.0))
+
+(defineo (r x)
+  (conde
+    [(== x 1)]
+    [(== x 2)]
+    ))
+
+(test-check "sktests.tex-positive-twin-definition-predicate"
+(run 1 (q) (r+))
+
+`(_.0))
+
+(test-check "sktests.tex-negative-twin-definition-predicate"
+(run 1 (q) (r-))
+
+`(_.0))
+
+; Stratified program's twins produce exactly the same results.
+;;; Stratified negation, loop and negation does not mixed together.
+(reset-program)
+; a :- b.
+; b :- a.
+; c :- not a.
+; c :- d.
+; d :- c.
+; e :- not d.
+(defineo (a) (b))
+(defineo (b) (a))
+(defineo (c) 
+  (conde 
+    [(noto (a))]
+    [(d)]))
+(defineo (d) (c))
+(defineo (e) (noto (d)))
+
+(test-check "sktests.tex-stratified-twin-propositional-a"   
+(= (length (run* (q) (a+)))
+   (length (run* (q) (a-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-propositional-b"   
+(= (length (run* (q) (b+)))
+   (length (run* (q) (b-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-propositional-c"   
+(= (length (run* (q) (c+)))
+   (length (run* (q) (c-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-propositional-d"   
+(= (length (run* (q) (d+)))
+   (length (run* (q) (d-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-propositional-e"   
+(= (length (run* (q) (e+)))
+   (length (run* (q) (e-))))
+
+#t)
+
+
+;;; Stratified negation, example taken from 
+;;; https://www3.cs.stonybrook.edu/~warren/xsbbook/node59.html
+;;; For stratified negation, the loop can't has negation in it. We are using the
+;;; loop part of the example to test stable-Kanren's ability to handle positive
+;;; loop in the program.
+(reset-program)
+(defineo (reduce x y)
+  (conde
+    [(== x 'a) (== y 'b)]
+    [(== x 'b) (== y 'c)]
+    [(== x 'c) (== y 'd)]
+    [(== x 'd) (== y 'e)]
+    [(== x 'e) (== y 'c)]
+    [(== x 'a) (== y 'f)]
+    [(== x 'f) (== y 'h)]
+    [(== x 'f) (== y 'g)]
+    [(== x 'g) (== y 'f)]
+    [(== x 'g) (== y 'k)]
+    [(== x 'h) (== y 'i)]
+    [(== x 'i) (== y 'h)]))
+
+;reachable(X,Y) :- reduce(X,Y).
+;reachable(X,Y) :- reachable(X,Z), reduce(Z,Y).
+(defineo (reachable x y)
+  (conde
+    [(reduce x y)]
+    [(fresh (z) (reduce x z) (reachable z y))]))
+
+;reducible(X) :- reachable(X,Y), not reachable(Y,X).
+(defineo (reducible x)
+  (conde
+   [(fresh (y) (reachable x y) (noto (reachable y x)))]))
+
+;fullyReduce(X,Y) :- reachable(X,Y), not reducible(Y).
+(defineo (fullyReduce x y)
+  (conde
+    [(reachable x y) (noto (reducible y))]))
+
+(test-check "sktests.tex-stratified-twin-predicate-reduce"   
+(= (length (run* (q) (reduce+)))
+   (length (run* (q) (reduce-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-predicate-reachable"   
+(= (length (run* (q) (reachable+)))
+   (length (run* (q) (reachable-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-predicate-reducible"   
+(= (length (run* (q) (reducible+)))
+   (length (run* (q) (reducible-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-predicate-fullyReduce"   
+(= (length (run* (q) (fullyReduce+)))
+   (length (run* (q) (fullyReduce-))))
+
+#t)
+
+(test-check "sktests.tex-stratified-twin-predicate"   
+(stratified?)
+
+#t)
+
+; Normal program's twins produce different results.
+;;; Testing Two Person Game in stableKanren
+(reset-program)
+(defineo (edge x y)
+  (conde
+    [(== x 'b) (== y 'c)]
+    [(== x 'a) (== y 'b)]
+    [(== x 'b) (== y 'a)]
+    [(== x 'c) (== y 'd)]))
+
+(defineo (win x)
+  (fresh (y)
+    (edge x y)
+    (noto (win y))))
+
+; No loop and negation, the result is the same.
+(test-check "sktests.tex-normal-twin-predicate-edge"   
+(= (length (run* (q) (edge+)))
+     (length (run* (q) (edge-))))
+
+#t)
+
+; There is a loop over negation, the result is different.
+(test-check "sktests.tex-normal-twin-predicate-win"   
+(not (= (length (run* (q) (win+)))
+     (length (run* (q) (win-)))))
+
+#t)
+
+(test-check "sktests.tex-normal-twin-predicate"   
+(stratified?)
+
+#f)
+

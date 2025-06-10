@@ -298,6 +298,69 @@
       (lambdag@ (n cfs s)
         ((name params ...) (+ 1 n) cfs s)))))
 
+;;; ==== self-aware program analysis twins (head) ====
+;;;
+;;; Syntax analysis to find stratified negations (noto + loop) in the program. 
+;;; This is the second part, where the head definition of each clause is provided.
+;;; The body translation happens with `positive/negative-twin`, where we remove
+;;; the variables and append a suffix (+/-) to the goal's name to create twins.
+;;; In the head definition, we assign different semantics to the loops.
+;;;
+;;; Refer to the stratified negation definition for the justification.
+;;; A stratified negation means the negation (noto) and the loop in the program
+;;; do not mix. There are two levels of stratification: compilation time and
+;;; execution time. Compilation time refers to the stratification that can be
+;;; identified by analyzing the input program with minimal effort through
+;;; simulation.  We identify the compilation time here by dividing the twins 
+;;; into different semantics. The positive twin returns true on a negative loop,
+;;; but the negative twin returns false. Therefore, the twins produce the same
+;;; results for stratified programs and produce different results for normal programs.
+;;;
+;;; [ToDo] This works at the syntax level only; add runtime level analysis later.
+(define-syntax define-positive-twin
+  (syntax-rules ()
+    ((_ name exp ...)
+      (eval 
+       `(define (,(sym-append-str `name "+"))
+          (lambdag@ (n cfs c : S P L)
+            (let* ([name+ (sym-append-str `name "+")]
+                   [signature (list name+ `())]
+                   [result (element-of-set? signature P)]
+                   [record (element-of-set? signature cfs)])
+              ; Before the execution, check if the node we have encountered
+              ; during the checking process.
+              (if (and result #t) 
+                (unit c)
+                (if (and record #t)
+                  (let ([diff (- n (get-value record))])
+                    (if (= 0 diff)
+                      ; Positive loop (stratified negation)
+                      (unit c)
+                      ; Negative loop (normal program)
+                      (mzero)))
+                  ((fresh ()
+                     (positive-twin exp ...) (ext-p name+ `()))
+                     n (expand-cfs signature n cfs) c))))))))))
+
+(define-syntax define-negative-twin
+  (syntax-rules ()
+    ((_ name exp ...)
+      (eval
+        `(define (,(sym-append-str `name "-"))
+          (lambdag@ (n cfs c : S P L)
+            (let* ([name- (sym-append-str `name "-")]
+                   [signature (list name- `())]
+                   [result (element-of-set? signature P)]
+                   [record (element-of-set? signature cfs)])
+              (if (or (and result #t) (and record #t))
+                ; Always succeed for positive and negative loop.
+                (unit c)
+                ((fresh ()
+                   (negative-twin exp ...) (ext-p name- `()))
+                   n (expand-cfs signature n cfs) c)))))))))
+
+;;; ---- self-aware program analysis twins (head) ----
+
 (define-syntax defineo
   (syntax-rules ()
     ((_ (name params ...) exp ...)
@@ -306,6 +369,10 @@
       ;;; add it to the global-checking-rules set.
       (if (and (has-negation? exp ...) (not (get-global-checking-rules `name)))
         (add-global-checking-rules! `name (length (list `params ...))))
+      ;;; Define a propositional version of the original program for dependency
+      ;;; graph analysis.
+      (define-positive-twin name exp ...)
+      (define-negative-twin name exp ...)
       ;;; Define a goal function with the original rules "exp ...", and the 
       ;;; complement rules "complement exp ..."
       (define name (lambda (params ...)

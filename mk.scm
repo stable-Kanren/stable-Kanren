@@ -150,13 +150,17 @@
      (take n
        (lambdaf@ ()
          ((fresh (x) g0 g ... 
-          ; [ToDo] Performance optimization, stratified programs don't need such
-          ; checking, we are still deciding which way we want to choose. If our
+          ; [ToDo] Performance optimization. We need a
           ; priority ordering algorithm can turn the BFS into DFS in a few
-          ; iterations on stratified programs, we saved extra computation on
-          ; determining whether the input program is stratified.
-          (lambdag@ (negation-counter cfs c : S P L)
-            (if (null? 
+          ; iterations on stratified programs, we saved extra computation.
+          (lambdag@ (nc cfs c : S P L)
+            ; Performance optimization. If the input program is stratified, we 
+            ; don't perform the additional non-monotonic resolution.
+            ; [ToDo] This works at the syntax level only; add runtime level analysis later.
+            ; If the input program has constraint, it's a normal program.
+            (if (and (or (not (stratified?))
+                         (constrained?))
+                (null? 
                 ; `check-all-rules` computes all future answers, but we only
                 ; need to find one to make sure the partial answer is good.
                 ;
@@ -176,7 +180,7 @@
                     ; [ToDo] In real-world applications, multiple programs may
                     ; load into the same environment, we can filter out the
                     ; rules reachable in the query to check.
-                    ((check-all-rules global-checking-rules x) negation-counter cfs c))))
+                    ((check-all-rules global-checking-rules x) negation-counter cfs c)))))
               (mzero)
               (cons (reify x S) '()))))
           negation-counter call-frame-stack empty-c))))))
@@ -496,6 +500,24 @@
   (if (= n 0)
       `()
       (cons (var (format "temp_~a" n)) (construct-var-list (- n 1)))))
+
+;;; To find out a program is stratified or not by running on global-checking-rules.
+(define (stratified?)
+  (fold-left
+    (lambda (l r) (and l r)) #t
+    (map
+      (lambda (record)
+        (= (length 
+             (run-partial #f (q) (apply (eval (sym-append-str (get-key record) "+")) `())))
+           (length
+             (run-partial #f (q) (apply (eval (sym-append-str (get-key record) "-")) `())))))
+      ; [ToDo]: filter out a portion of the program that only touched by the query.
+      global-checking-rules)))
+
+;;; To find out a program is constrained or not by checking on constraint-rules.
+(define (constrained?)
+  ; [ToDo]: filter out a portion of the constraints that only touched by the query.
+  (not (null? constraint-rules)))
 
 ;;; Use the reduct program to get all value sets of a given goal with unbounded
 ;;; variables. The reduct program is a special program without any negations.
