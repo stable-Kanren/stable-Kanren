@@ -158,8 +158,6 @@
     [(reachable x y) (noto (reducible y))]))
 
 ; test final-SCC problem run* to get all final-SCC.
-; [ToDo] Performance optimization.
-(reset-program)
 (test-check "testnaf.tex-10d"   
 (sort compare-element (remove-duplicates 
   (run* (q) (fresh (x y) (fullyReduce x y) (== q `(,x ,y))) )))
