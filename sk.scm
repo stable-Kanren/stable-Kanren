@@ -279,7 +279,7 @@
   (lambdag@(n cfs c : S P L)
     ; At this point, all arguments have a substitution.
     (let* ([key (map (lambda (arg)
-                     (walk arg S)) argv)]
+                     (walk* arg S)) argv)]
            [result (element-of-set? (list name key) P)]
            [emitter (sym-append-str name
                 (number->string (modulo n 2)))])
