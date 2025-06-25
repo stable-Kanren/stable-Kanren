@@ -211,6 +211,48 @@
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
 
+;;; Match the constants in emitter's parameters.
+;;; emitter: ('s sv), values: ('s 0) ---> matched 's
+;;; emitter: ('e ev), values: ('s 0) ---> unmatched
+;;;
+;;; Assume the length of the emitter's parameters and values are the same. The
+;;; built-in `map` will throw an error for different lengths.
+;;;
+;;; The internal representation of value is a list of `quote-symbol`s, so the
+;;; variables can be represented as symbols. The `define-syntax` also converts
+;;; values (symbol only) into the similar representation, so the variables will
+;;; be symbols.
+;;;
+;;; For example, the parameter of an emitter in
+;;; (constrainto [(emitter 's sv)] [])
+;;; will be compiled into ((quote s) 'sv), the constant 's turns into (quote s),
+;;; the variable sv turns into 'sv.
+;;;
+;;; Therefore, during the runtime, we will have:
+;;; emitter: ((quote s) 'sv), values: ((quote s) (quote 0)).
+;;;
+;;; Currently, this function serves two purposes: matching constants or variables.
+;;; If the emitter has no constants, this function always returns true.
+;;; [ToDo] The constant emitters and variable emitters are mixed in the global
+;;; and local constraint sets (`constraint-rules` and `L` in `lambdag@`).
+;;; Modifying this data structure into two sets, we may have a better algorithm.
+(define (constraint-emitter-matched-constants? params vals)
+  ; Filter out the emitter that has matched constants or all variables.
+  (fold-left (lambda (l r) (and l r)) #t
+    (map (lambda (p v)
+           ; If the parameter is a symbol, it is a variable.
+           (or (symbol? p)
+               ; Or it is not a variable; we try to match constants.
+               (and (not (symbol? p))
+                    ; [ToDo] (equal? p v) is faster, but produces the wrong
+                    ; answer for some problems. The reason is `quote-symbol`
+                    ; quote everything, including numbers and strings, but the 
+                    ; `define-syntax` stores numbers without a quote. If we
+                    ; modify `quote-symbol` to actually only quote symbols, the
+                    ; (equal? p v) became slower. There is more work needed to
+                    ; investigate and refactor these internal representations.
+                    (equal? (eval p) (eval v)))))
+    params vals)))
 ;;; To propagate constraints using the values from the emitter. It selects an
 ;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
 ;;; to wrap the constraint handler (`exprs`). Returning a list of values,

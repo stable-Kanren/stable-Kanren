@@ -206,6 +206,27 @@
 
 `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
 
+;;; ==== Testing constraint-emitter-matched-constants? ====
+; No constants in parameters
+(test-check "testpcx.tex-constraint-emitter-matched-constants-1"
+(constraint-emitter-matched-constants? `(a b) `('0 'hello))
+
+#t)
+
+; No matched constants
+(test-check "testpcx.tex-constraint-emitter-matched-constants-2"
+(constraint-emitter-matched-constants? `(a 0) `('a '1))
+
+#f)
+
+; Matched constants (symbol, number, string, list)
+(test-check "testpcx.tex-constraint-emitter-matched-constants-3"
+(constraint-emitter-matched-constants?
+  `(a   0 'a b         "world" (list 'tomato 'potato))
+  `('a '0 'a '"hello" '"world" (list 'tomato 'potato)))
+
+#t)
+
 ;;; ==== Integrated testing ====
 ;;; Integrate constraint-updater and constraint-checker
 (test-check "testpcx.tex-constraint-1"
