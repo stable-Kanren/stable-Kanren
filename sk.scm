@@ -253,6 +253,47 @@
                     ; investigate and refactor these internal representations.
                     (equal? (eval p) (eval v)))))
     params vals)))
+
+;;; Remove the constants in emitter's parameters and corresponding values.
+;;; emitter: ('s sv), values: ('s 0) ---> emitter: (sv), values: (0)
+;;; It always removes the constants no matter it matches the values or not.
+;;; emitter: ('e ev), values: ('s 0) ---> emitter: (ev), values: (0)
+;;; 
+;;; Assume they are matched by the `constraint-emitter-matched-constants?`, and
+;;; the length of the emitter's parameters and values are the same. The built-in
+;;; `map` will throw an error for different lengths.
+;;;
+;;; The internal representation of variables is symbol, and the emitters are
+;;; emitting values to the variables. So, we can use `symbol?` to filter out all
+;;; variables in the emitter, and the corresponding values.
+;;;
+;;; For example, the parameter of an emitter in
+;;; (constrainto [(emitter 's sv)] [])
+;;; will be compiled into ((quote s) 'sv), the constant 's turns into (quote s),
+;;; the variable sv turns into 'sv.
+;;;
+;;; Therefore, during the runtime, we will have:
+;;; emitter: ((quote s) 'sv), values: ((quote s) (quote 0)).
+;;; We need to remove all constants (numbers, symbols, strings, lists), only
+;;; keep the variables. Ater removal, we will have:
+;;; emitter: ('sv), values: ((quote 0))
+;;;
+;;; Note: The ordering of params and vals are reversed, and it does not matter.
+;;; As long as the value is bind to the correct variable during constraint
+;;; handler construction (building lambda).
+(define (constraint-emitter-remove-constants params vals)
+  (fold-left
+    (lambda (l r)
+      `(,(cons (car r) (car l)) ,(cons (cadr r) (cadr l))))
+    `(() ())
+    (filter
+      (lambda (pair)
+        (symbol? (car pair)))
+      (map
+        (lambda (p v)
+          `(,p ,v))
+        params vals))))
+
 ;;; To propagate constraints using the values from the emitter. It selects an
 ;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
 ;;; to wrap the constraint handler (`exprs`). Returning a list of values,

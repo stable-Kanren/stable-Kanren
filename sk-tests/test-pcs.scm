@@ -227,6 +227,27 @@
 
 #t)
 
+;;; ==== Testing constraint-emitter-remove-constants ====
+; Empty list
+(test-check "testpcx.tex-constraint-emitter-remove-constants-1"
+(constraint-emitter-remove-constants `() `())
+
+`(() ()))
+
+; All constants (symbol, number, string, list)
+(test-check "testpcx.tex-constraint-emitter-remove-constants-2"
+; The values does not matter, see assumption in the comment
+(constraint-emitter-remove-constants `('r 1 "hello" (list 'foo 'bar)) `('s 0 "world" (list 'tomato 'potato)))
+
+`(() ()))
+
+; Reverse ordering (symbol, number, string, list)
+(test-check "testpcx.tex-constraint-emitter-remove-constants-3"
+; The ordering does not matter as long as they matched the values
+(constraint-emitter-remove-constants `(s n str lst) `('s 0 "world" (list 'tomato 'potato)))
+
+`((lst str n s) ((list 'tomato 'potato) "world" 0 's)))
+
 ;;; ==== Integrated testing ====
 ;;; Integrate constraint-updater and constraint-checker
 (test-check "testpcx.tex-constraint-1"
