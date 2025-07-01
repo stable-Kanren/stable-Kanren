@@ -248,6 +248,32 @@
 
 `((lst str n s) ((list 'tomato 'potato) "world" 0 's)))
 
+;;; ==== Testing constraint-emitter-reorder ====
+; Untouched
+(test-check "testpcx.tex-constraint-emitter-reorder-1"
+(constraint-emitter-reorder 'apple `((assign 's sv) (assign 'e ev) (assign p pv)) `('e '1))
+
+`((assign 's sv) (assign 'e ev) (assign p pv)))
+
+; Matched variable
+(test-check "testpcx.tex-constraint-emitter-reorder-2"
+(constraint-emitter-reorder 'assign `((assign 's sv) (assign 'e ev) (assign p pv) (assign q qv)) `('a '1))
+
+`((assign p pv) (assign 's sv) (assign 'e ev) (assign q qv)))
+
+; Matched constant
+(test-check "testpcx.tex-constraint-emitter-reorder-3"
+(constraint-emitter-reorder 'assign `((assign 's sv) (assign 'e ev) (assign p pv) (assign q qv)) `('e '0))
+
+`((assign 'e ev) (assign 's sv) (assign p pv) (assign q qv)))
+
+; Variable before constant
+; To show the caller must ensure the constants are before the variables
+(test-check "testpcx.tex-constraint-emitter-reorder-4"
+(constraint-emitter-reorder 'assign `((apple 's sv) (assign p pv) (assign 'e ev) (assign q qv)) `('e '0))
+
+`((assign p pv) (apple 's sv) (assign 'e ev) (assign q qv)))
+
 ;;; ==== Integrated testing ====
 ;;; Integrate constraint-updater and constraint-checker
 (test-check "testpcx.tex-constraint-1"

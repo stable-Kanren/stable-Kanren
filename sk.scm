@@ -294,6 +294,29 @@
           `(,p ,v))
         params vals))))
 
+;;; Reorder the emitters in the list, so the first one will be the right one we
+;;; use to construct the constraint handler (lambda).
+;;; emitters: (('s sv) ('e ev) (p pv)), values: ('e '1)
+;;; After reordering:
+;;; emitters: (('e ev) ('s sv) (p pv))
+;;;
+;;; emitters: (('s sv) ('e ev) (p pv) (q qv)), values: ('r '0)
+;;; After reordering:
+;;; emitters: ((p pv) ('e ev) ('s sv) (q qv))
+;;;
+;;; Assume the constant constraints are placed before variable constraints, as
+;;; we sorted in `constrainto` and the ordering is maintained in place.
+;;; The emitter reordered to the first can be either constant or variable, as we
+;;; showed in the above examples. This emitter will be consumed later by 
+;;; `constraint-updater` and `constraint-checker`, so the rest of the emitters
+;;; list remains the same property.
+(define (constraint-emitter-reorder emitter_name emitters vals)
+  (move-to-first vals emitters
+    (lambda (values emitter)
+      (and (eq? emitter_name (car emitter))
+           (constraint-emitter-matched-constants?
+             (cdr emitter) vals)))))
+
 ;;; To propagate constraints using the values from the emitter. It selects an
 ;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
 ;;; to wrap the constraint handler (`exprs`). Returning a list of values,
