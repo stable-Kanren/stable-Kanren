@@ -129,7 +129,7 @@
   (remove-duplicates 
   (map (lambda (emitter)
         `(,(car emitter) 
-         (,(rotate-to-first emitter emitters
+         (,(move-to-first emitter emitters
               (lambda (l r) (eq? (car l) (car r))))
           ,expr)))
   emitters)))

@@ -35,14 +35,14 @@
 (constraint-compiler `((p0 x) (q1 y) (q0 z)) `(and (= x y) (= x z)))
 
 `((p0 (((p0 x) (q1 y) (q0 z)) (and (= x y) (= x z))))
-  (q1 (((q1 y) (q0 z) (p0 x)) (and (= x y) (= x z))))
+  (q1 (((q1 y) (p0 x) (q0 z)) (and (= x y) (= x z))))
   (q0 (((q0 z) (p0 x) (q1 y)) (and (= x y) (= x z))))))
 
 ; Three emitters and duplicated two
 (test-check "testpcx.tex-constraint-compiler-6"
 (constraint-compiler `((q1 y) (p0 x) (q1 z)) `(and (= x y) (= x z)))
 
-`((p0 (((p0 x) (q1 z) (q1 y)) (and (= x y) (= x z))))
+`((p0 (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
   (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
 
 ;;; ==== Testing constraint-emitter ====
@@ -112,7 +112,7 @@
   (constrainto ((noto (q y)) (p x) (noto (q z))) ((= x y) (= x z)))
   constraint-rules))
 
-`((p0 (((p0 x) (q1 z) (q1 y)) (and (= x y) (= x z))))
+`((p0 (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
   (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
 
 ;;; ==== Testing quote-symbol ====
