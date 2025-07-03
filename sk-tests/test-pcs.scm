@@ -274,6 +274,37 @@
 
 `((assign p pv) (apple 's sv) (assign 'e ev) (assign q qv)))
 
+;;; ==== Testing constraint-emitter-filter ====
+; Unmatched name
+(test-check "testpcx.tex-constraint-emitter-filter-1"
+(constraint-emitter-filter 'apple `((assign 's sv) (assign p pv) (assign 'e ev) (assign q qv)) `('e '0))
+
+#f)
+
+; Unmatched constants (no variables)
+(test-check "testpcx.tex-constraint-emitter-filter-2"
+(constraint-emitter-filter 'assign `((assign 's sv) (assign 'p pv) (assign 'e ev) (assign 'q qv)) `('r '0))
+
+#f)
+
+; Matched variables (unmatched constants)
+(test-check "testpcx.tex-constraint-emitter-filter-3"
+(constraint-emitter-filter 'assign `((assign 's sv) (assign p pv) (assign 'e ev) (assign q qv)) `('r '0))
+
+#t)
+
+; Matched constants (no variables)
+(test-check "testpcx.tex-constraint-emitter-filter-4"
+(constraint-emitter-filter 'assign `((assign 's sv) (assign 'p pv) (assign 'e ev) (assign 'q qv)) `('e '0))
+
+#t)
+
+; Matched constants and variables (only the first match will be used later)
+(test-check "testpcx.tex-constraint-emitter-filter-5"
+(constraint-emitter-filter 'assign `((assign 's sv) (assign p pv) (assign 'e ev) (assign q qv)) `('e '0))
+
+#t)
+
 ;;; ==== Integrated testing ====
 ;;; Integrate constraint-updater and constraint-checker
 (test-check "testpcx.tex-constraint-1"

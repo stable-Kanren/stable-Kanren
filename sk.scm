@@ -317,6 +317,28 @@
            (constraint-emitter-matched-constants?
              (cdr emitter) vals)))))
 
+;;; Filter out the emitters that have only variables or matched constants.
+;;; name: assign emitters: ((assign s sv) (assign e ev)) values: ('s '0) ---> #t
+;;; name: apple  emitters: ((assign s sv) (assign e ev)) values: ('s '0) ---> #f
+;;; name: assign emitters: ((assign 's sv) (assign e ev)) values: ('s '0) ---> #t
+;;; name: assign emitters: ((assign 's sv) (assign e ev)) values: ('e '0) ---> #f
+;;;
+;;; If the emitters list has any matched emitter, the emitters list can be used
+;;; for `constraint-updater` or `constraint-checker`.
+;;;
+;;; [ToDo] This is very similar to `constraint-emitter-reorder`, there may be a
+;;; better computation order to combine the two processes into one. We tried a
+;;; few, but the performance dropped if we reordered the emitters before filtering.
+(define (constraint-emitter-filter emitter_name emitters vals)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map
+      (lambda (emitter)
+        (and
+          (eq? emitter_name (car emitter))
+          (constraint-emitter-matched-constants?
+            (cdr emitter) vals)))
+    emitters)))
+
 ;;; To propagate constraints using the values from the emitter. It selects an
 ;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
 ;;; to wrap the constraint handler (`exprs`). Returning a list of values,
