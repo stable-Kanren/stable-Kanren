@@ -321,6 +321,35 @@
 
 #f)
 
+(test-check "testpcx.tex-constant-constraint-1"
+(constraint-checker 'p0 `(1 1)
+  (constraint-updater 'q1 `(1 2) `((p0 (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2))))
+                               (q1 (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2)))))))
+
+#t)
+
+(test-check "testpcx.tex-constant-constraint-2"
+(constraint-checker 'p0 `(2 2)
+  (constraint-updater 'q1 `(2 1) `((p0 (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2))))
+                               (q1 (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2)))))))
+
+#f)
+
+(test-check "testpcx.tex-variable-and-constant-constraint-1"
+(constraint-checker 'p0 `(1 1)
+  (constraint-updater 'q1 `(1 2) `((p0 (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2))))
+                               (q1 (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2)))))))
+
+#t)
+
+(test-check "testpcx.tex-variable-and-constant-constraint-2"
+(constraint-checker 'p0 `(2 2)
+  (constraint-updater 'q1 `(2 1) `((p0 (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2))))
+                               (q1 (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2)))))))
+
+#f)
+
+;;; [ToDo] Sort constant constraint before variable constraint in constrainto
 ;;; Integrate constrainto, constraint-updater, and constraint-checker
 (reset-program)
 (constrainto ((p x) (noto (q y))) ((= x 1) (= y 2)))
@@ -342,6 +371,28 @@
 (test-check "testpcx.tex-variable-constraint-5"
 (constraint-checker 'p0 `(1)
                     `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+
+#t)
+
+(reset-program)
+(constrainto [(p 1 2) (noto (q 2 1))] [])
+
+(test-check "testpcx.tex-constant-constraint-3"
+(constraint-checker 'p0 `(1 2)
+  (constraint-updater 'q1 `(2 1) `()))
+
+#t)
+
+(test-check "testpcx.tex-constant-constraint-4"
+(constraint-checker 'p0 `(1 1)
+  (constraint-updater 'q1 `(3 1) 
+                    `((p0 (((p0 1 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
+
+#f)
+
+(test-check "testpcx.tex-constant-constraint-5"
+(constraint-checker 'p0 `(2 1)
+                    `((p0 (((p0 2 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
 
 #t)
 

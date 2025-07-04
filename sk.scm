@@ -343,11 +343,18 @@
 ;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
 ;;; to wrap the constraint handler (`exprs`). Returning a list of values,
 ;;; parameters, constraint handler, and remaining constraints (`remains`).
+;;;
+;;; During selection, the `constraint-emitter-reorder` moves the proper emitter
+;;; to the first of the emitter list. Then `constraint-emitter-remove-constants`
+;;; removes any constants in the parameter list and the corresponding values.
 (define (constraint-propagator emitter row vals)
-  (let* ([quote-s (eval `(quote-symbol ,vals))]
-         [params (cdr (caaadr row))]
+  (let* ([quote-v (eval `(quote-symbol ,vals))]
+         [reordered-e (constraint-emitter-reorder emitter (caadr row) quote-v)]
+         [processed-params-values (constraint-emitter-remove-constants (cdar reordered-e) quote-v)]
+         [quote-s (cadr processed-params-values)]
+         [params (car processed-params-values)]
          [exprs (cadadr row)]
-         [remains (cdaadr row)])
+         [remains (cdr reordered-e)])
   `(,quote-s ,params ,exprs ,remains)))
 
 ;;; The constraint is ready to check when the verifier receives the values from
@@ -368,7 +375,8 @@
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
                    (and (eq? emitter (car row))
-                        (= (length (cdaadr row)) 0)))
+                        (= (length (cdaadr row)) 0)
+                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
                  (append constraint-rules L)))))
 
 
@@ -397,7 +405,8 @@
              (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
                    (and (eq? emitter (car row))
-                        (> (length (cdaadr row)) 0)))
+                        (> (length (cdaadr row)) 0)
+                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
                  (append constraint-rules L)))))
 
 ;;; ---- predicate constraint ----
