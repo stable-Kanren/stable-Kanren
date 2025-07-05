@@ -7,43 +7,43 @@
 ;;; ==== Testing constraint-compiler ====
 ; Empty emitter
 (test-check "testpcx.tex-constraint-compiler-1"
-(constraint-compiler `() `(= 1 1))
+(constraint-compiler `() #t `(= 1 1))
 
 `())
 
 ; One emitter
 (test-check "testpcx.tex-constraint-compiler-2"
-(constraint-compiler `((p0 x)) `(= x 1))
+(constraint-compiler `((p0 x)) #t `(= x 1))
 
-`((p0 (((p0 x)) (= x 1)))))
+`(((p0 #t) (((p0 x)) (= x 1)))))
 
 ; Duplicated emitters
 (test-check "testpcx.tex-constraint-compiler-3"
-(constraint-compiler `((p0 x) (p0 y)) `(= x y))
+(constraint-compiler `((p0 x) (p0 y)) #t `(= x y))
 
-`((p0 (((p0 x) (p0 y)) (= x y)))))
+`(((p0 #t) (((p0 x) (p0 y)) (= x y)))))
 
 ; Two emitters
 (test-check "testpcx.tex-constraint-compiler-4"
-(constraint-compiler `((p0 x) (q1 y)) `(= x y))
+(constraint-compiler `((p0 x) (q1 y)) #t `(= x y))
 
-`((p0 (((p0 x) (q1 y)) (= x y)))
-  (q1 (((q1 y) (p0 x)) (= x y)))))
+`(((p0 #t) (((p0 x) (q1 y)) (= x y)))
+  ((q1 #t) (((q1 y) (p0 x)) (= x y)))))
 
 ; Three emitters
 (test-check "testpcx.tex-constraint-compiler-5"
-(constraint-compiler `((p0 x) (q1 y) (q0 z)) `(and (= x y) (= x z)))
+(constraint-compiler `((p0 x) (q1 y) (q0 z)) #t `(and (= x y) (= x z)))
 
-`((p0 (((p0 x) (q1 y) (q0 z)) (and (= x y) (= x z))))
-  (q1 (((q1 y) (p0 x) (q0 z)) (and (= x y) (= x z))))
-  (q0 (((q0 z) (p0 x) (q1 y)) (and (= x y) (= x z))))))
+`(((p0 #t) (((p0 x) (q1 y) (q0 z)) (and (= x y) (= x z))))
+  ((q1 #t) (((q1 y) (p0 x) (q0 z)) (and (= x y) (= x z))))
+  ((q0 #t) (((q0 z) (p0 x) (q1 y)) (and (= x y) (= x z))))))
 
 ; Three emitters and duplicated two
 (test-check "testpcx.tex-constraint-compiler-6"
-(constraint-compiler `((q1 y) (p0 x) (q1 z)) `(and (= x y) (= x z)))
+(constraint-compiler `((q1 y) (p0 x) (q1 z)) #t `(and (= x y) (= x z)))
 
-`((p0 (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
-  (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
+`(((p0 #t) (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
+  ((q1 #t) (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
 
 ;;; ==== Testing constraint-emitter ====
 ; Positive emitter
@@ -75,7 +75,7 @@
   (constrainto ((p x)) ())
   constraint-rules))
 
-`((p0 (((p0 x)) (and)))))
+`(((p0 #t) (((p0 x)) (and)))))
 
 ;;; One negative emitter
 (reset-program)
@@ -84,7 +84,7 @@
   (constrainto ((noto (q y))) ((= y 1)))
   constraint-rules))
 
-`((q1 (((q1 y)) (and (= y 1))))))
+`(((q1 #t) (((q1 y)) (and (= y 1))))))
 
 ;;; One positive emitter
 (reset-program)
@@ -93,7 +93,7 @@
   (constrainto ((r z)) ((= z 2)))
   constraint-rules))
 
-`((r0 (((r0 z)) (and (= z 2))))))
+`(((r0 #t) (((r0 z)) (and (= z 2))))))
 
 ;;; Mixed negative and positive emitters
 (reset-program)
@@ -102,8 +102,8 @@
   (constrainto ((s a) (noto (t b))) ((= a 3) (= b 4)))
   constraint-rules))
 
-`((s0 (((s0 a) (t1 b)) (and (= a 3) (= b 4))))
-  (t1 (((t1 b) (s0 a)) (and (= a 3) (= b 4))))))
+`(((s0 #t) (((s0 a) (t1 b)) (and (= a 3) (= b 4))))
+  ((t1 #t) (((t1 b) (s0 a)) (and (= a 3) (= b 4))))))
 
 ; Three emitters and duplicated two
 (reset-program)
@@ -112,8 +112,8 @@
   (constrainto ((noto (q y)) (p x) (noto (q z))) ((= x y) (= x z)))
   constraint-rules))
 
-`((p0 (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
-  (q1 (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
+`(((p0 #t) (((p0 x) (q1 y) (q1 z)) (and (= x y) (= x z))))
+  ((q1 #t) (((q1 y) (p0 x) (q1 z)) (and (= x y) (= x z))))))
 
 ;;; ==== Testing quote-symbol ====
 (test-check "testpcx.tex-quote-symbol"
@@ -162,26 +162,26 @@
 ;;; ==== Testing constraint-checker ====
 ;;; No matched emitter name
 (test-check "testpcx.tex-constraint-checker-1"
-(constraint-checker 'q1 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+(constraint-checker 'q1 `(2) `(((p0 #t) (((p0 x)) (and (= x 1))))))
 
 #f)
 
 ;;; No ready verifier (length > 0)
 (test-check "testpcx.tex-constraint-checker-2"
-(constraint-checker 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
-                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
+(constraint-checker 'q1 `(2) `(((p0 #t) (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               ((q1 #t) (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
 
 #f)
 
 ;;; Check returns false
 (test-check "testpcx.tex-constraint-checker-3"
-(constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+(constraint-checker 'p0 `(2) `(((p0 #t) (((p0 x)) (and (= x 1))))))
 
 #f)
 
 ;;; Check returns true
 (test-check "testpcx.tex-constraint-checker-4"
-(constraint-checker 'p0 `(2) `((p0 (((p0 x)) (and (> x 1))))))
+(constraint-checker 'p0 `(2) `(((p0 #t) (((p0 x)) (and (> x 1))))))
 
 #t)
 
@@ -189,22 +189,22 @@
 ;;; No matched emitter name
 (reset-program)
 (test-check "testpcx.tex-constraint-updater-1"
-(constraint-updater 'q1 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+(constraint-updater 'q1 `(2) `(((p0 #t) (((p0 x)) (and (= x 1))))))
 
 `())
 
 ;;; No pending emitter (length = 0)
 (test-check "testpcx.tex-constraint-updater-2"
-(constraint-updater 'p0 `(2) `((p0 (((p0 x)) (and (= x 1))))))
+(constraint-updater 'p0 `(2) `(((p0 #t) (((p0 x)) (and (= x 1))))))
 
 `())
 
 ;;; Updated constraint rules
 (test-check "testpcx.tex-constraint-updater-3"
-(constraint-updater 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
-                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
+(constraint-updater 'q1 `(2) `(((p0 #t) (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               ((q1 #t) (((q1 y) (p0 x)) (and (= x 1) (= y 2))))))
 
-`((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+`(((p0 #t) (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
 
 ;;; ==== Testing constraint-emitter-matched-constants? ====
 ; No constants in parameters
@@ -309,43 +309,43 @@
 ;;; Integrate constraint-updater and constraint-checker
 (test-check "testpcx.tex-variable-constraint-1"
 (constraint-checker 'p0 `(1)
-  (constraint-updater 'q1 `(2) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
-                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(2) `(((p0 #t) (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               ((q1 #t) (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
 
 #t)
 
 (test-check "testpcx.tex-variable-constraint-2"
 (constraint-checker 'p0 `(2)
-  (constraint-updater 'q1 `(1) `((p0 (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
-                               (q1 (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(1) `(((p0 #t) (((p0 x) (q1 y)) (and (= x 1) (= y 2))))
+                               ((q1 #t) (((q1 y) (p0 x)) (and (= x 1) (= y 2)))))))
 
 #f)
 
 (test-check "testpcx.tex-constant-constraint-1"
 (constraint-checker 'p0 `(1 1)
-  (constraint-updater 'q1 `(1 2) `((p0 (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2))))
-                               (q1 (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(1 2) `(((p0 #f) (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2))))
+                               ((q1 #f) (((p0 1 x) (q1 1 y)) (and (= x 1) (= y 2)))))))
 
 #t)
 
 (test-check "testpcx.tex-constant-constraint-2"
 (constraint-checker 'p0 `(2 2)
-  (constraint-updater 'q1 `(2 1) `((p0 (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2))))
-                               (q1 (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(2 1) `(((p0 #f) (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2))))
+                               ((q1 #f) (((p0 2 x) (q1 2 y)) (and (= x 1) (= y 2)))))))
 
 #f)
 
 (test-check "testpcx.tex-variable-and-constant-constraint-1"
 (constraint-checker 'p0 `(1 1)
-  (constraint-updater 'q1 `(1 2) `((p0 (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2))))
-                               (q1 (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(1 2) `(((p0 #f) (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2))))
+                               ((q1 #f) (((p0 1 x) (q1 z y)) (and (= x 1) (= y 2)))))))
 
 #t)
 
 (test-check "testpcx.tex-variable-and-constant-constraint-2"
 (constraint-checker 'p0 `(2 2)
-  (constraint-updater 'q1 `(2 1) `((p0 (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2))))
-                               (q1 (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2)))))))
+  (constraint-updater 'q1 `(2 1) `(((p0 #f) (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2))))
+                               ((q1 #f) (((p0 2 x) (q1 z y)) (and (= x 1) (= y 2)))))))
 
 #f)
 
@@ -364,13 +364,13 @@
 (test-check "testpcx.tex-variable-constraint-4"
 (constraint-checker 'p0 `(1)
   (constraint-updater 'q1 `(3) 
-                    `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
+                    `(((p0 #t) (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
 
 #f)
 
 (test-check "testpcx.tex-variable-constraint-5"
 (constraint-checker 'p0 `(1)
-                    `((p0 (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+                    `(((p0 #t) (((p0 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
 
 #t)
 
@@ -386,13 +386,13 @@
 (test-check "testpcx.tex-constant-constraint-4"
 (constraint-checker 'p0 `(1 1)
   (constraint-updater 'q1 `(3 1) 
-                    `((p0 (((p0 1 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
+                    `(((p0 #f) (((p0 1 x)) ((lambda (y) (and (= x 1) (= y 2))) '2))))))
 
 #f)
 
 (test-check "testpcx.tex-constant-constraint-5"
 (constraint-checker 'p0 `(2 1)
-                    `((p0 (((p0 2 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
+                    `(((p0 #f) (((p0 2 x)) ((lambda (y) (and (= x 1) (= y 2))) '2)))))
 
 #t)
 

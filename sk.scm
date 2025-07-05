@@ -108,7 +108,7 @@
 
 ;;; ==== predicate constraint ====
 ;;; Compile emitters and verifier as our internal constraint rule representation.
-;;; It is a key-value pair of <emitter, [emitters list, verifier]>.
+;;; It is a key-value pair of <(emitter type), [emitters list, verifier]>.
 ;;;
 ;;; The emitter list tracks all emitters to ensure the verifier receives 
 ;;; sufficient values from the emitter. Every time an emitter emits values,
@@ -122,13 +122,20 @@
 ;;; (noto (q y z))  ---> '(q1 y z)
 ;;; 0 or 1 depends on the emitter coming from a positive(0) or negative (1) goal.
 ;;;
+;;; We use boolean value to indicate the emitters are variables or constants.
+;;; If they are all variables, we can avoid additional computation for the
+;;; constants.
+;;; (p x)           ---> #t (variable constraint)
+;;; (p 1)           ---> #f (constant constraint)
+;;; [ToDo] If we allow constant and variable emitters 
+;;;
 ;;; We can only keep a unique emitter name as the key to save space. To speed up
 ;;; the remove operation on the list, we put the emitter used as key at the first. 
-;;;
-(define (constraint-compiler emitters expr)
+;;; [ToDo] If the constant and variable emitters are 
+(define (constraint-compiler emitters type expr)
   (remove-duplicates 
   (map (lambda (emitter)
-        `(,(car emitter) 
+        `(,(list (car emitter) type)
          (,(move-to-first emitter emitters
               (lambda (l r) (eq? (car l) (car r))))
           ,expr)))
@@ -189,6 +196,7 @@
         (append constraint-rules
           (constraint-compiler
             `(,(constraint-emitter g) ...)
+            (constraint-emitter-all-variables? `(,(constraint-emitter g) ...))
             '(and expr ...)))))]))
 
 ;;; Add a quote to a list of symbols. So, it can be evaluated as data, not code.
@@ -210,6 +218,19 @@
   (syntax-rules ()
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
+
+(define (constraint-emitter-has-constants? params)
+  ; ('s 0 sv) --> internal representation: ((quote s) 0 sv) --> types: (list number symbol)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map (lambda (e) 
+           (not (symbol? e)))
+    params)))
+
+(define (constraint-emitter-all-variables? emitters)
+  (fold-left (lambda (l r) (and l r)) #t
+    (map (lambda (emitter)
+           (not (constraint-emitter-has-constants? (cdr emitter))))
+  emitters)))
 
 ;;; Match the constants in emitter's parameters.
 ;;; emitter: ('s sv), values: ('s 0) ---> matched 's
@@ -348,6 +369,12 @@
 ;;; to the first of the emitter list. Then `constraint-emitter-remove-constants`
 ;;; removes any constants in the parameter list and the corresponding values.
 (define (constraint-propagator emitter row vals)
+  (if (cadar row)
+  (let* ([quote-s (eval `(quote-symbol ,vals))]
+         [params (cdr (caaadr row))]
+         [exprs (cadadr row)]
+         [remains (cdaadr row)])
+  `(,quote-s ,params ,exprs ,remains))
   (let* ([quote-v (eval `(quote-symbol ,vals))]
          [reordered-e (constraint-emitter-reorder emitter (caadr row) quote-v)]
          [processed-params-values (constraint-emitter-remove-constants (cdar reordered-e) quote-v)]
@@ -355,7 +382,7 @@
          [params (car processed-params-values)]
          [exprs (cadadr row)]
          [remains (cdr reordered-e)])
-  `(,quote-s ,params ,exprs ,remains)))
+  `(,quote-s ,params ,exprs ,remains))))
 
 ;;; The constraint is ready to check when the verifier receives the values from
 ;;; the last emitter. The verifier accumulates the previous values, which are
@@ -374,9 +401,10 @@
                   [exprs (caddr result)])
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
-                   (and (eq? emitter (car row))
+                   (and (eq? emitter (caar row))
                         (= (length (cdaadr row)) 0)
-                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
+                        (or (cadar row))))
+                        ;(constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals))))))
                  (append constraint-rules L)))))
 
 
@@ -402,11 +430,13 @@
                   [remains (cadddr result)])
            (constraint-compiler 
              remains
+             (cadar row)
              (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
-                   (and (eq? emitter (car row))
+                   (and (eq? emitter (caar row))
                         (> (length (cdaadr row)) 0)
-                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
+                        (or (cadar row))))
+                        ;(constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals))))))
                  (append constraint-rules L)))))
 
 ;;; ---- predicate constraint ----
