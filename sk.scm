@@ -129,7 +129,7 @@
   (remove-duplicates 
   (map (lambda (emitter)
         `(,(car emitter) 
-         (,(rotate-to-first emitter emitters
+         (,(move-to-first emitter emitters
               (lambda (l r) (eq? (car l) (car r))))
           ,expr)))
   emitters)))
@@ -211,6 +211,152 @@
     [(_ (params ...) (values ...) expr)
       `((lambda (params ...) expr) values ...)]))
 
+;;; Match the constants in emitter's parameters.
+;;; emitter: ('s sv), values: ('s 0) ---> matched 's
+;;; emitter: ('e ev), values: ('s 0) ---> unmatched
+;;;
+;;; Assume the length of the emitter's parameters and values are the same. The
+;;; built-in `map` will throw an error for different lengths.
+;;;
+;;; The internal representation of value is a list of `quote-symbol`s, so the
+;;; variables can be represented as symbols. The `define-syntax` also converts
+;;; values (symbol only) into the similar representation, so the variables will
+;;; be symbols.
+;;;
+;;; For example, the parameter of an emitter in
+;;; (constrainto [(emitter 's sv)] [])
+;;; will be compiled into ((quote s) 'sv), the constant 's turns into (quote s),
+;;; the variable sv turns into 'sv.
+;;;
+;;; Therefore, during the runtime, we will have:
+;;; emitter: ((quote s) 'sv), values: ((quote s) (quote 0)).
+;;;
+;;; Currently, this function serves two purposes: matching constants or variables.
+;;; If the emitter has no constants, this function always returns true.
+;;; [ToDo] The constant emitters and variable emitters are mixed in the global
+;;; and local constraint sets (`constraint-rules` and `L` in `lambdag@`).
+;;; Modifying this data structure into two sets, we may have a better algorithm.
+(define (constraint-emitter-matched-constants? params vals)
+  ; Filter out the emitter that has matched constants or all variables.
+  (fold-left (lambda (l r) (and l r)) #t
+    (map (lambda (p v)
+           ; If the parameter is a symbol, it is a variable.
+           (or (symbol? p)
+               ; Or it is not a variable; we try to match constants.
+               (and (not (symbol? p))
+                    ; [ToDo] (equal? p v) is faster, but produces the wrong
+                    ; answer for some problems. The reason is `quote-symbol`
+                    ; quote everything, including numbers and strings, but the 
+                    ; `define-syntax` stores numbers without a quote. If we
+                    ; modify `quote-symbol` to actually only quote symbols, the
+                    ; (equal? p v) became slower. There is more work needed to
+                    ; investigate and refactor these internal representations.
+                    (equal? (eval p) (eval v)))))
+    params vals)))
+
+;;; Remove the constants in emitter's parameters and corresponding values.
+;;; emitter: ('s sv), values: ('s 0) ---> emitter: (sv), values: (0)
+;;; It always removes the constants no matter it matches the values or not.
+;;; emitter: ('e ev), values: ('s 0) ---> emitter: (ev), values: (0)
+;;; 
+;;; Assume they are matched by the `constraint-emitter-matched-constants?`, and
+;;; the length of the emitter's parameters and values are the same. The built-in
+;;; `map` will throw an error for different lengths.
+;;;
+;;; The internal representation of variables is symbol, and the emitters are
+;;; emitting values to the variables. So, we can use `symbol?` to filter out all
+;;; variables in the emitter, and the corresponding values.
+;;;
+;;; For example, the parameter of an emitter in
+;;; (constrainto [(emitter 's sv)] [])
+;;; will be compiled into ((quote s) 'sv), the constant 's turns into (quote s),
+;;; the variable sv turns into 'sv.
+;;;
+;;; Therefore, during the runtime, we will have:
+;;; emitter: ((quote s) 'sv), values: ((quote s) (quote 0)).
+;;; We need to remove all constants (numbers, symbols, strings, lists), only
+;;; keep the variables. Ater removal, we will have:
+;;; emitter: ('sv), values: ((quote 0))
+;;;
+;;; Note: The ordering of params and vals are reversed, and it does not matter.
+;;; As long as the value is bind to the correct variable during constraint
+;;; handler construction (building lambda).
+(define (constraint-emitter-remove-constants params vals)
+  (fold-left
+    (lambda (l r)
+      `(,(cons (car r) (car l)) ,(cons (cadr r) (cadr l))))
+    `(() ())
+    (filter
+      (lambda (pair)
+        (symbol? (car pair)))
+      (map
+        (lambda (p v)
+          `(,p ,v))
+        params vals))))
+
+;;; Reorder the emitters in the list, so the first one will be the right one we
+;;; use to construct the constraint handler (lambda).
+;;; emitters: (('s sv) ('e ev) (p pv)), values: ('e '1)
+;;; After reordering:
+;;; emitters: (('e ev) ('s sv) (p pv))
+;;;
+;;; emitters: (('s sv) ('e ev) (p pv) (q qv)), values: ('r '0)
+;;; After reordering:
+;;; emitters: ((p pv) ('e ev) ('s sv) (q qv))
+;;;
+;;; Assume the constant constraints are placed before variable constraints, as
+;;; we sorted in `constrainto` and the ordering is maintained in place.
+;;; The emitter reordered to the first can be either constant or variable, as we
+;;; showed in the above examples. This emitter will be consumed later by 
+;;; `constraint-updater` and `constraint-checker`, so the rest of the emitters
+;;; list remains the same property.
+(define (constraint-emitter-reorder emitter_name emitters vals)
+  (move-to-first vals emitters
+    (lambda (values emitter)
+      (and (eq? emitter_name (car emitter))
+           (constraint-emitter-matched-constants?
+             (cdr emitter) vals)))))
+
+;;; Filter out the emitters that have only variables or matched constants.
+;;; name: assign emitters: ((assign s sv) (assign e ev)) values: ('s '0) ---> #t
+;;; name: apple  emitters: ((assign s sv) (assign e ev)) values: ('s '0) ---> #f
+;;; name: assign emitters: ((assign 's sv) (assign e ev)) values: ('s '0) ---> #t
+;;; name: assign emitters: ((assign 's sv) (assign e ev)) values: ('e '0) ---> #f
+;;;
+;;; If the emitters list has any matched emitter, the emitters list can be used
+;;; for `constraint-updater` or `constraint-checker`.
+;;;
+;;; [ToDo] This is very similar to `constraint-emitter-reorder`, there may be a
+;;; better computation order to combine the two processes into one. We tried a
+;;; few, but the performance dropped if we reordered the emitters before filtering.
+(define (constraint-emitter-filter emitter_name emitters vals)
+  (fold-left (lambda (l r) (or l r)) #f
+    (map
+      (lambda (emitter)
+        (and
+          (eq? emitter_name (car emitter))
+          (constraint-emitter-matched-constants?
+            (cdr emitter) vals)))
+    emitters)))
+
+;;; To propagate constraints using the values from the emitter. It selects an
+;;; emitter and produces a proper parameter list (`params`) for the values (`quote-s`)
+;;; to wrap the constraint handler (`exprs`). Returning a list of values,
+;;; parameters, constraint handler, and remaining constraints (`remains`).
+;;;
+;;; During selection, the `constraint-emitter-reorder` moves the proper emitter
+;;; to the first of the emitter list. Then `constraint-emitter-remove-constants`
+;;; removes any constants in the parameter list and the corresponding values.
+(define (constraint-propagator emitter row vals)
+  (let* ([quote-v (eval `(quote-symbol ,vals))]
+         [reordered-e (constraint-emitter-reorder emitter (caadr row) quote-v)]
+         [processed-params-values (constraint-emitter-remove-constants (cdar reordered-e) quote-v)]
+         [quote-s (cadr processed-params-values)]
+         [params (car processed-params-values)]
+         [exprs (cadadr row)]
+         [remains (cdr reordered-e)])
+  `(,quote-s ,params ,exprs ,remains)))
+
 ;;; The constraint is ready to check when the verifier receives the values from
 ;;; the last emitter. The verifier accumulates the previous values, which are
 ;;; stored in L. If the verifier only needs one emitter, it stores in constraint-rules.
@@ -222,13 +368,15 @@
 (define (constraint-checker emitter vals L)
   (fold-left (lambda (l r) (or l r)) #f
     (map (lambda (row)
-           (let ([params (cdr (caaadr row))]
-                 [exprs (cadadr row)]
-                 [quote-s (eval `(quote-symbol ,vals))])
+           (let* ([result (constraint-propagator emitter row vals)]
+                  [quote-s (car result)]
+                  [params (cadr result)]
+                  [exprs (caddr result)])
            (eval (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
                    (and (eq? emitter (car row))
-                        (= (length (cdaadr row)) 0)))
+                        (= (length (cdaadr row)) 0)
+                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
                  (append constraint-rules L)))))
 
 
@@ -247,16 +395,18 @@
 (define (constraint-updater emitter vals L)
   (fold-left append `()
     (map (lambda (row)
-           (let ([params (cdr (caaadr row))]
-                 [exprs (cadadr row)]
-                 [remains (cdaadr row)]
-                 [quote-s (eval `(quote-symbol ,vals))])
+           (let* ([result (constraint-propagator emitter row vals)]
+                  [quote-s (car result)]
+                  [params (cadr result)]
+                  [exprs (caddr result)]
+                  [remains (cadddr result)])
            (constraint-compiler 
              remains
              (constraint-constructor ,params ,quote-s ,exprs))))
          (filter (lambda (row)
                    (and (eq? emitter (car row))
-                        (> (length (cdaadr row)) 0)))
+                        (> (length (cdaadr row)) 0)
+                        (constraint-emitter-filter emitter (caadr row) (eval `(quote-symbol ,vals)))))
                  (append constraint-rules L)))))
 
 ;;; ---- predicate constraint ----
@@ -266,7 +416,7 @@
   (lambdag@(n cfs c : S P L)
     ; At this point, all arguments have a substitution.
     (let* ([key (map (lambda (arg)
-                     (walk arg S)) argv)]
+                     (walk* arg S)) argv)]
            [result (element-of-set? (list name key) P)]
            [emitter (sym-append-str name
                 (number->string (modulo n 2)))])

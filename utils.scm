@@ -29,7 +29,7 @@
 
 ;;; Rotate element e to the first of the list.
 ; O(n) complexity.
-; If there is more than one element matched, only move to the first match.
+; If there is more than one element matched, only rotate to the first match.
 (define (rotate-to-first e l cmp)
   (define (iterate lhs rhs)
     (cond
@@ -37,6 +37,17 @@
       [(cmp e (car rhs)) (append lhs (reverse rhs))]
       (else (iterate (cons (car rhs) lhs) (cdr rhs)))))
   (reverse (iterate `() l)))
+
+;;; Move element e to the first of the list.
+; O(n) complexity.
+; If there is more than one element matched, only move the first match.
+(define (move-to-first e l cmp)
+  (define (iterate lhs rhs)
+    (cond
+      [(null? rhs) lhs]
+      [(cmp e (car rhs)) (cons (car rhs) (append lhs (cdr rhs)))]
+      (else (iterate (append lhs (list (car rhs))) (cdr rhs)))))
+  (iterate `() l))
 
 ;;; Find bounded variables from a substitution.
 ; O(n) complexity.
