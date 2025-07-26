@@ -1,5 +1,6 @@
 (source-directories '("." "./sk-tests/" "../"))
 (load "mktests.scm")
+(load "test-skdefs.scm")
 (load "test-revo.scm")
 (load "test-wns.scm")
 (load "test-pcs.scm")
