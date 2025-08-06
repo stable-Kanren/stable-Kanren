@@ -166,3 +166,94 @@
   (nullo x))
 
 `(()))
+
+; ==== Testing membero ====
+(test-check "testskdefs.tex-20"
+(run* (q) 
+  (membero 'olive `(virgin olive oil))
+  (== #t q))
+
+(list #t))
+
+(test-check "testskdefs.tex-21"
+(run 1 (y)
+  (membero y `(hummus with pita)))
+
+(list `hummus))
+
+(test-check "testskdefs.tex-22"
+(run 1 (y)
+  (membero y `(with pita)))
+
+(list `with))
+
+(test-check "testskdefs.tex-23"
+(run 1 (y)
+  (membero y `(pita)))
+
+(list `pita))
+
+(test-check "testskdefs.tex-24"
+(run* (y)
+  (membero y `()))
+
+`())
+
+(test-check "testskdefs.tex-25"
+(run* (y)
+  (membero y `(hummus with pita)))
+
+`(hummus with pita))
+
+(test-check "testskdefs.tex-26"
+(run* (x)
+  (membero 'e `(pasta ,x fagioli)))
+
+(list `e))
+
+(test-check "testskdefs.tex-27"
+(run 1 (x)
+  (membero 'e `(pasta e ,x fagioli)))
+
+(list `_.0))
+
+(test-check "testskdefs.tex-28"
+(run 1 (x)
+  (membero 'e `(pasta ,x e fagioli)))
+
+(list `e))
+
+(test-check "testskdefs.tex-29"
+(run* (r)
+  (fresh (x y)
+    (membero 'e `(pasta ,x fagioli ,y))
+    (== `(,x ,y) r)))
+
+`((e _.0) (_.0 e)))
+
+(test-check "testskdefs.tex-30"
+(run 1 (l)
+  (membero 'tofu l))
+
+`((tofu . _.0)))
+
+; Safe variable assumption not allow the following test.
+; (test-check "testskdefs.tex-31"
+; (run 5 (l)
+;   (membero 'tofu l))
+
+
+; `((tofu . _.0)
+;  (_.0 tofu . _.1)
+;  (_.0 _.1 tofu . _.2)
+;  (_.0 _.1 _.2 tofu . _.3)
+;  (_.0 _.1 _.2 _.3 tofu . _.4))
+; )
+
+(test-check "testskdefs.tex-31"
+(run 5 (l)
+  (membero 'tofu l))
+
+`((tofu . _.0)
+ (_.0 tofu . _.1))
+)

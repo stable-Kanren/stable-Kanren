@@ -1,4 +1,4 @@
-(source-directories '("." "./sk-tests/" "../"))
+(source-directories '("." "./sk-tests/" "../" "../../"))
 (load "sk.scm")
 
 (defineo (caro p a)
@@ -14,4 +14,12 @@
 
 (defineo (nullo x)
   (== '() x))
+
+(defineo (membero x l)
+  (conde [(fresh (a)
+            (caro l a)
+            (== a x))]
+         [(fresh (d)
+            (cdro l d)
+            (membero x d))]))
 
