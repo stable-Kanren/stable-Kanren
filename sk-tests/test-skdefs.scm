@@ -257,3 +257,22 @@
 `((tofu . _.0)
  (_.0 tofu . _.1))
 )
+
+; ==== Testing rembero ====
+; Safe variable assumption requires a variable to unify with a value. In the
+; current implementation, unbounded variables cannot be constrained under noto.
+; So, the following test only produces one answer.
+(test-check "testc15.tex-17"
+(run 1 (q) (fresh (y) (rembero y `(a b c d e) q)))
+
+`((a b c d)))
+
+; This works as `rember`, the functional version of rembero.
+(test-check "testc15.tex-18"
+(run* (q) (rembero 'a '(a b a c) q))
+
+`((b c)))
+
+; [ToDo] To generate any list
+; (run 10 (q) (rembero 'a q '(b c)))
+; It inserts any number of 'a in the list.
