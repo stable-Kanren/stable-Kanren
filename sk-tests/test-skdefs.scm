@@ -258,17 +258,235 @@
  (_.0 tofu . _.1))
 )
 
+; ==== Testing appendo ====
+; [ToDo] Improve coinductive implementation when dealing with the loop that
+; contains variables.
+(test-check "testappendo.tex-1"
+(run* (x)
+  (appendo
+    '(cake)
+    '(tastes yummy)
+    x))
+
+(list `(cake tastes yummy)))
+
+(test-check "testappendo.tex-2"
+(run* (x)
+  (fresh (y)
+    (appendo
+      `(cake with ice ,y)
+      '(tastes yummy)
+      x)))
+
+(list `(cake with ice _.0 tastes yummy)))
+
+(test-check "testappendo.tex-3"
+(run* (x)
+  (fresh (y)
+    (appendo
+      '(cake with ice cream)
+      y
+      x)))
+
+(list `(cake with ice cream . _.0)))
+
+(test-check "testappendo.tex-4"
+(run 1 (x)
+  (fresh (y)
+    (appendo `(cake with ice . ,y) '(d t) x)))
+
+(list `(cake with ice d t)))
+
+(test-check "testappendo.tex-5"
+(run 1 (y)
+  (fresh (x)
+    (appendo `(cake with ice . ,y) '(d t) x)))
+
+  (list '()))
+
+(test-check "testappendo.tex-6"
+(run 5 (x)
+  (fresh (y)
+    (appendo `(cake with ice . ,y) '(d t) x)))
+
+
+`((cake with ice d t)
+ (cake with ice _.0 d t))
+ ; (cake with ice _.0 _.1 d t)
+ ; (cake with ice _.0 _.1 _.2 d t)
+ ; (cake with ice _.0 _.1 _.2 _.3 d t))
+)
+
+(test-check "testappendo.tex-7"
+(run 5 (y)
+  (fresh (x)
+    (appendo `(cake with ice . ,y) '(d t) x)))
+
+
+`(()
+ (_.0))
+ ; (_.0 _.1)
+ ; (_.0 _.1 _.2)
+ ; (_.0 _.1 _.2 _.3))
+)
+
+ (define y 
+
+`(_.0 _.1 _.2)
+
+ ) 
+
+
+(test-check "testappendo.tex-8"
+`(cake with ice . ,y)
+
+
+`(cake with ice . (_.0 _.1 _.2))
+)
+
+(test-check "testappendo.tex-9"
+(run 5 (x)
+  (fresh (y)
+    (appendo
+      `(cake with ice . ,y)
+      `(d t . ,y)
+      x)))
+
+
+`((cake with ice d t)
+ (cake with ice _.0 d t _.0)
+ (cake with ice _.0 _.1 d t _.0 _.1)
+ (cake with ice _.0 _.1 _.2 d t _.0 _.1 _.2)
+ (cake with ice _.0 _.1 _.2 _.3 d t _.0 _.1 _.2 _.3))
+)
+
+(test-check "testappendo.tex-10"
+(run* (x)
+  (fresh (z)
+    (appendo
+      `(cake with ice cream)
+      `(d t . ,z)
+      x)))
+
+
+`((cake with ice cream d t . _.0))
+)
+
+(test-check "testappendo.tex-11"
+(run 6 (x)
+  (fresh (y)
+    (appendo x y `(cake with ice d t))))
+
+
+`(()
+ (cake)
+ (cake with)
+ (cake with ice)
+ (cake with ice d)
+ (cake with ice d t))
+)
+
+(test-check "testappendo.tex-12"
+(run 6 (y)
+  (fresh (x)
+    (appendo x y `(cake with ice d t))))
+
+
+`((cake with ice d t)
+ (with ice d t)
+ (ice d t)
+ (d t)
+ (t)
+ ())
+)
+
+(test-check "testappendo.tex-13"
+(run 7 (r)
+  (fresh (x y)
+    (appendo x y `(cake with ice d t))
+    (== `(,x ,y) r)))
+
+
+`((() (cake with ice d t))
+ ((cake) (with ice d t))
+ ((cake with) (ice d t))
+ ((cake with ice) (d t))
+ ((cake with ice d) (t))
+ ((cake with ice d t) ())))
+
+
+(test-check "testappendo.tex-14"
+(run 7 (x)
+  (fresh (y z)
+    (appendo x y z)))
+
+
+`(()
+ (_.0))
+ ; (_.0 _.1)
+ ; (_.0 _.1 _.2)
+ ; (_.0 _.1 _.2 _.3)
+ ; (_.0 _.1 _.2 _.3 _.4)
+ ; (_.0 _.1 _.2 _.3 _.4 _.5))
+)
+
+(test-check "testappendo.tex-15"
+(run 7 (y)
+  (fresh (x z)
+    (appendo x y z)))
+
+
+`(_.0 
+ _.0)
+ ; _.0
+ ; _.0
+ ; _.0
+ ; _.0
+ ; _.0)
+)
+
+(test-check "testappendo.tex-16"
+(run 7 (z)
+  (fresh (x y)
+    (appendo x y z)))
+
+
+`(_.0
+ (_.0 . _.1))
+ ; (_.0 _.1 . _.2)
+ ; (_.0 _.1 _.2 . _.3)
+ ; (_.0 _.1 _.2 _.3 . _.4)
+ ; (_.0 _.1 _.2 _.3 _.4 . _.5)
+ ; (_.0 _.1 _.2 _.3 _.4 _.5 . _.6))
+)
+
+(test-check "testappendo.tex-17"
+(run 7 (r)
+  (fresh (x y z)
+    (appendo x y z)
+    (== `(,x ,y ,z) r)))
+
+
+`((() _.0 _.0)
+ ((_.0) _.1 (_.0 . _.1)))
+ ; ((_.0 _.1) _.2 (_.0 _.1 . _.2))
+ ; ((_.0 _.1 _.2) _.3 (_.0 _.1 _.2 . _.3))
+ ; ((_.0 _.1 _.2 _.3) _.4 (_.0 _.1 _.2 _.3 . _.4))
+ ; ((_.0 _.1 _.2 _.3 _.4) _.5 (_.0 _.1 _.2 _.3 _.4 . _.5))
+ ; ((_.0 _.1 _.2 _.3 _.4 _.5) _.6 (_.0 _.1 _.2 _.3 _.4 _.5 . _.6)))
+)
+
 ; ==== Testing rembero ====
 ; Safe variable assumption requires a variable to unify with a value. In the
 ; current implementation, unbounded variables cannot be constrained under noto.
 ; So, the following test only produces one answer.
-(test-check "testc15.tex-17"
+(test-check "testrembero.tex-1"
 (run 1 (q) (fresh (y) (rembero y `(a b c d e) q)))
 
 `((a b c d)))
 
 ; This works as `rember`, the functional version of rembero.
-(test-check "testc15.tex-18"
+(test-check "testrembero.tex-2"
 (run* (q) (rembero 'a '(a b a c) q))
 
 `((b c)))

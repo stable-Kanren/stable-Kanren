@@ -15,6 +15,13 @@
 (defineo (nullo x)
   (== '() x))
 
+(defineo (appendo l s out)
+  (conde [(nullo l) (== s out)]
+         [(fresh (a d res)
+            (conso a d l)
+            (conso a res out)
+            (appendo d s res))]))
+
 (defineo (membero x l)
   (conde [(fresh (a)
             (caro l a)
