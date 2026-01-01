@@ -152,9 +152,9 @@
 (define (emitter-global-checking emitters)
   (map (lambda (row)
          ; This is not thread safe, same as other exclamation mark operators.
-         (add-global-checking-rules! (car row) (cadr row)))
+         ((global-checking-rules 'add-rule!) (car row) (cadr row)))
        (filter (lambda (row)
-                 (not (get-global-checking-rules (car row))))
+                 (not ((global-checking-rules 'get-rule) (car row))))
                (remove-duplicates emitters))))
 
 ;;; It extracts the emitter name and its arity.
@@ -517,8 +517,8 @@
       (begin
       ;;; If a rule has a negation in it and hasn't been added by `constrainto,`
       ;;; add it to the global-checking-rules set.
-      (if (and (has-negation? exp ...) (not (get-global-checking-rules `name)))
-        (add-global-checking-rules! `name (length (list `params ...))))
+      (if (and (has-negation? exp ...) (not ((global-checking-rules 'get-rule) `name)))
+        ((global-checking-rules 'add-rule!) `name (length (list `params ...))))
       ;;; Define a propositional version of the original program for dependency
       ;;; graph analysis.
       (define-positive-twin name exp ...)
