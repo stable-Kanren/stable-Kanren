@@ -27,7 +27,7 @@
 (test-check "sktests.tex-emitter-global-checking-0a"
 (begin
   (emitter-global-checking (emitter-signature (noto (p x))))
-  (global-checking-rules 'how-many-rules?))
+  (constraint-checking-rules 'how-many-rules?))
 
 `((p . 1)))
 
@@ -35,7 +35,7 @@
 (test-check "sktests.tex-emitter-global-checking-0b"
 (begin
   (emitter-global-checking (emitter-signature (q x y z) (noto (p x))))
-  (global-checking-rules 'how-many-rules?))
+  (constraint-checking-rules 'how-many-rules?))
 
 `((p . 1) (q . 3)))
 

@@ -152,9 +152,9 @@
 (define (emitter-global-checking emitters)
   (map (lambda (row)
          ; This is not thread safe, same as other exclamation mark operators.
-         ((global-checking-rules 'add-rule!) (car row) (cadr row)))
+         ((constraint-checking-rules 'add-rule!) (car row) (cadr row)))
        (filter (lambda (row)
-                 (not ((global-checking-rules 'get-rule) (car row))))
+                 (not ((constraint-checking-rules 'get-rule) (car row))))
                (remove-duplicates emitters))))
 
 ;;; It extracts the emitter name and its arity.

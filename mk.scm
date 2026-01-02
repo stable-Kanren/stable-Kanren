@@ -181,7 +181,12 @@
                     ; [ToDo] In real-world applications, multiple programs may
                     ; load into the same environment, we can filter out the
                     ; rules reachable in the query to check.
-                    ((check-all-rules (global-checking-rules 'how-many-rules?) x) negation-counter cfs c)))))
+                    ((check-all-rules
+                       (remove-duplicates
+                         (append
+                           (global-checking-rules 'how-many-rules?)
+                           (constraint-checking-rules 'how-many-rules?)))
+                       x) negation-counter cfs c)))))
               (mzero)
               (cons (reify x S) '()))))
           negation-counter call-frame-stack empty-c))))))
@@ -472,13 +477,16 @@
       (g succeed)
       ((== #f #f) fail))))
 
+; Compiled constraint after CaVE to store as emitter and verifier.
 ; (name[0|1], ((list (name[0|1] params) ...), expr))
 (define constraint-rules `())
 ; [(name, arity) ...]
+(define constraint-checking-rules (make-checking-rules))
 (define global-checking-rules (make-checking-rules))
 
 (define reset-program (lambda ()
   (set! constraint-rules `())
+  (constraint-checking-rules 'reset-rules!)
   (global-checking-rules 'reset-rules!)))
 
 ;;; Fetch one rule from the program rules set until the set is empty.
@@ -509,7 +517,7 @@
 ;;; To find out a program is constrained or not by checking on constraint-rules.
 (define (constrained?)
   ; [ToDo]: filter out a portion of the constraints that only touched by the query.
-  (not (null? constraint-rules)))
+  (not (null? (constraint-checking-rules 'how-many-rules?))))
 
 ;;; Use the reduct program to get all value sets of a given goal with unbounded
 ;;; variables. The reduct program is a special program without any negations.
