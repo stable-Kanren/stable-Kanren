@@ -1,4 +1,3 @@
-(source-directories '("." "./sk-tests/" "../"))
 (load "utils.scm")
 
 ;;; Getter and Setter of the checking rules.
