@@ -1,3 +1,4 @@
+; ====== 5 * 5 chessboard ======
 > (time (run 1 (q) (fresh (x1  y1  x2  y2  x3  y3  x4  y4  x5  y5  x6  y6  x7  y7  x8  y8  x9  y9 x10 y10 x11 y11 x12 y12 x13 y13 x14 y14 x15 y15 x16 y16 x17 y17 x18 y18 x19 y19 x20 y20 x21 y21 x22 y22 x23 y23 x24 y24 x25 y25)
     (pick  1  x1  y1)
     (pick  2  x2  y2)
@@ -26,6 +27,7 @@
     (pick 25 x25 y25)
   (== q `(( ,x1 ,y1 ) ( ,x2 ,y2 ) ( ,x3 ,y3 ) ( ,x4 ,y4 ) ( ,x5 ,y5 ) ( ,x6 ,y6 ) ( ,x7 ,y7 ) ( ,x8 ,y8 ) ( ,x9 ,y9 ) (,x10 ,y10) (,x11 ,y11) (,x12 ,y12) (,x13 ,y13) (,x14 ,y14) (,x15 ,y15) (,x16 ,y16) (,x17 ,y17) (,x18 ,y18) (,x19 ,y19) (,x20 ,y20) (,x21 ,y21) (,x22 ,y22) (,x23 ,y23) (,x24 ,y24) (,x25 ,y25) ))) ))
 
+; Output using BFS mplus.
 (time (run 1 ...))
     236592 collections
     1009.101291735s elapsed cpu time, including 11.892879000s collecting
@@ -35,7 +37,17 @@
   (1 3) (2 1) (4 2) (5 4) (3 5) (1 4) (2 2) (4 1) (5 3) (3 2)
   (5 1) (4 3) (5 5) (3 4) (1 5)))
 
-[ToDo] Add heuristic search, improve performance on 5*5 knight's tour, then test on a bigger board.
+; Output using DFS mplus.
+(time (run 1 ...))
+    41210 collections
+    171.579704268s elapsed cpu time, including 1.343899000s collecting
+    171.817807000s elapsed real time, including 1.427906000s collecting
+    345784920080 bytes allocated, including 345781276408 bytes reclaimed
+(((1 1) (2 3) (1 5) (3 4) (1 3) (2 1) (4 2) (5 4) (3 5) (1 4)
+  (2 2) (4 1) (3 3) (2 5) (4 4) (5 2) (3 1) (1 2) (2 4) (4 5)
+  (5 3) (3 2) (5 1) (4 3) (5 5)))
+
+[ToDo] Add heuristic search, improve performance on 5 * 5 knight's tour, then test on a bigger 8 * 8 board.
 
 (run 1 (q) (fresh (x1  y1  x2  y2  x3  y3  x4  y4  x5  y5  x6  y6  x7  y7  x8  y8  x9  y9 x10 y10 x11 y11 x12 y12 x13 y13 x14 y14 x15 y15 x16 y16 x17 y17 x18 y18 x19 y19 x20 y20 x21 y21 x22 y22 x23 y23 x24 y24 x25 y25 x26 y26 x27 y27 x28 y28 x29 y29 x30 y30 x31 y31 x32 y32 x33 y33 x34 y34 x35 y35 x36 y36)
     (pick  1  x1  y1)
