@@ -1,0 +1,255 @@
+-=== run send.lp using clingo ===-
+
+/home/lambda/$ clingo send.lp 0
+
+clingo version 5.5.0
+Reading from send.lp
+Solving...
+Answer: 1
+assign(s,9) assign(e,5) assign(n,6) assign(d,7) assign(m,1) assign(o,0) assign(r,8) assign(y,2)
+SATISFIABLE
+
+Models       : 1
+Calls        : 1
+Time         : 199.323s (Solving: 0.34s 1st Model: 0.32s Unsat: 0.01s)
+CPU Time     : 199.228s
+
+-=== run send.scm using Scheme ===-
+
+==== Basic version ==== (One big constrainto)
+(load "send.scm")
+
+> (time (run 1 (q) (assign 's q)))
+(time (run 1 ...))
+    2120285 collections
+    14234.717014137s elapsed cpu time, including 2366.421540000s collecting
+    14242.155546000s elapsed real time, including 2374.093065000s collecting
+    17789093466336 bytes allocated, including 17789178203712 bytes reclaimed
+(9)
+> (time (run 1 (q) (assign 'e q)))
+(time (run 1 ...))
+    884359 collections
+    5727.800645131s elapsed cpu time, including 880.579790000s collecting
+    5730.585589000s elapsed real time, including 883.845706000s collecting
+    7420025614864 bytes allocated, including 7419780059584 bytes reclaimed
+(5)
+> (time (run 1 (q) (assign 'n q)))
+(time (run 1 ...))
+    1058248 collections
+    8667.489680669s elapsed cpu time, including 1481.690107000s collecting
+    8721.567050000s elapsed real time, including 1495.902420000s collecting
+    8879012860480 bytes allocated, including 8879233718776 bytes reclaimed
+(6)
+> (time (run 1 (q) (assign 'd q)))
+(time (run 1 ...))
+    1168566 collections
+    9765.146264994s elapsed cpu time, including 1727.627074000s collecting
+    9778.897454000s elapsed real time, including 1735.555534000s collecting
+    9804582459072 bytes allocated, including 9804373453672 bytes reclaimed
+(7)
+> (time (run 1 (q) (assign 'm q)))
+(time (run 1 ...))
+    142963 collections
+    1050.875374516s elapsed cpu time, including 180.386373000s collecting
+    1052.879431000s elapsed real time, including 181.279666000s collecting
+    1199492256192 bytes allocated, including 1199622471328 bytes reclaimed
+(1)
+> (time (run 1 (q) (assign 'o q)))
+(time (run 1 ...))
+    148697 collections
+    1080.101213461s elapsed cpu time, including 187.483525000s collecting
+    1080.749806000s elapsed real time, including 188.296666000s collecting
+    1247604738864 bytes allocated, including 1247680418576 bytes reclaimed
+(0)
+> (time (run 1 (q) (assign 'r q)))
+(time (run 1 ...))
+    1467856 collections
+    11060.839733052s elapsed cpu time, including 1862.429764000s collecting
+    11074.767889000s elapsed real time, including 1871.783142000s collecting
+    12315855979264 bytes allocated, including 12315915645120 bytes reclaimed
+(8)
+> (time (run 1 (q) (assign 'y q)))
+(time (run 1 ...))
+    549948 collections
+    3714.564012688s elapsed cpu time, including 603.073155000s collecting
+    3717.247702000s elapsed real time, including 605.921148000s collecting
+    4613635066256 bytes allocated, including 4613484386024 bytes reclaimed
+(2)
+
+> (time (run 1 (q) (fresh (s e n d m o r y) (assign 's s) (assign 'e e) (assign 
+'n n) (assign 'd d) (assign 'm m) (assign 'o o) (assign 'r r) (assign 'y y) (== 
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+(time (run 1 ...))
+    1173597 collections
+    4670.723841870s elapsed cpu time, including 87.784171000s collecting
+    4675.386030000s elapsed real time, including 91.092739000s collecting
+    9845367807040 bytes allocated, including 9845637736872 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+
+[omyendrs ] (01256789 answer sequence from small to big)
+> (time (run 1 (q) (fresh (s e n d m o r y) (assign 'o o) (assign 'm m) (assign '
+y y) (assign 'e e) (assign 'n n) (assign 'd d) (assign 'r r) (assign 's s) (==
+ q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+
+(time (run 1 ...))
+    822 collections
+    3.067647644s elapsed cpu time, including 0.039691000s collecting
+    3.069992000s elapsed real time, including 0.041199000s collecting
+    6898965136 bytes allocated, including 6895174128 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+> (time (run* (q) (fresh (s e n d m o r y) (assign 'o o) (assign 'm m) (assign '
+y y) (assign 'e e) (assign 'n n) (assign 'd d) (assign 'r r) (assign 's s) (==
+ q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+
+(time (run* (q) ...))
+    1477712 collections
+    5435.522105070s elapsed cpu time, including 70.212283000s collecting
+    5436.713521000s elapsed real time, including 73.000491000s collecting
+    12396392737248 bytes allocated, including 12396398218872 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+
+==== Smaller Constraints ==== (Five digits constrainto)
+(load "send-sc.scm")
+
+> (time (run 1 (q) (assign 's q)))
+(time (run 1 ...))
+    517285 collections
+    2795.813202569s elapsed cpu time, including 336.676338000s collecting
+    2797.674138000s elapsed real time, including 338.290610000s collecting
+    4339104656896 bytes allocated, including 4339097328808 bytes reclaimed
+(9)
+> (time (run 1 (q) (assign 'e q)))
+(time (run 1 ...))
+    47880 collections
+    256.736738517s elapsed cpu time, including 22.193446000s collecting
+    257.469078000s elapsed real time, including 22.394933000s collecting
+    401685909616 bytes allocated, including 401712354264 bytes reclaimed
+(5)
+
+> (time (run 1 (q) (assign 'n q)))
+(time (run 1 ...))
+    59670 collections
+    330.950904651s elapsed cpu time, including 29.540859000s collecting
+    331.742763000s elapsed real time, including 29.804199000s collecting
+    500588845920 bytes allocated, including 500596046352 bytes reclaimed
+(6)
+> (time (run 1 (q) (assign 'd q)))
+(time (run 1 ...))
+    63247 collections
+    353.611956306s elapsed cpu time, including 32.233859000s collecting
+    354.585835000s elapsed real time, including 32.554746000s collecting
+    530607597792 bytes allocated, including 530571188536 bytes reclaimed
+(7)
+> (time (run 1 (q) (assign 'm q)))
+(time (run 1 ...))
+    7961 collections
+    44.177178817s elapsed cpu time, including 4.104282000s collecting
+    44.259989000s elapsed real time, including 4.148399000s collecting
+    66780176944 bytes allocated, including 66813270040 bytes reclaimed
+(1)
+> (time (run 1 (q) (assign 'o q)))
+(time (run 1 ...))
+    8889 collections
+    51.200002522s elapsed cpu time, including 4.701357000s collecting
+    51.321990000s elapsed real time, including 4.747556000s collecting
+    74577599024 bytes allocated, including 74570276592 bytes reclaimed
+(0)
+> (time (run 1 (q) (assign 'r q)))
+(time (run 1 ...))
+    22567 collections
+    118.061881598s elapsed cpu time, including 8.168943000s collecting
+    118.262405000s elapsed real time, including 8.257946000s collecting
+    189324287984 bytes allocated, including 189337751536 bytes reclaimed
+(8)
+> (time (run 1 (q) (assign 'y q)))
+(time (run 1 ...))
+    13981 collections
+    74.048414913s elapsed cpu time, including 6.238204000s collecting
+    74.224755000s elapsed real time, including 6.298310000s collecting
+    117286610752 bytes allocated, including 117277671768 bytes reclaimed
+(2)
+
+
+> (time (run 1 (q) (fresh (s e n d m o r y) (assign 's s) (assign 'e e) (assign
+'n n) (assign 'd d) (assign 'm m) (assign 'o o) (assign 'r r) (assign 'y y) (==
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+(time (run 1 ...))
+    400839 collections
+    1569.468937258s elapsed cpu time, including 26.228410000s collecting
+    1570.133233000s elapsed real time, including 27.154698000s collecting
+    3361989218240 bytes allocated, including 3361983911488 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+> (time (run* (q) (fresh (s e n d m o r y) (assign 's s) (assign 'e e) (assign '
+n n) (assign 'd d) (assign 'm m) (assign 'o o) (assign 'r r) (assign 'y y) (== q
+ `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+(time (run* (q) ...))
+    432995 collections
+    1702.271650405s elapsed cpu time, including 28.793143000s collecting
+    1703.088139000s elapsed real time, including 29.828112000s collecting
+    3631688986544 bytes allocated, including 3631690858920 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+[omyendrs ] (01256789 answer sequence from small to big)
+> (time (run* (q) (fresh (s e n d m o r y) (assign 'o o) (assign 'm m) (assign '
+y y) (assign 'e e) (assign 'n n) (assign 'd d) (assign 'r r) (assign 's s) (==
+   q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+
+(time (run* (q) ...))
+    73893 collections
+    310.507984935s elapsed cpu time, including 5.176569000s collecting
+    311.447784000s elapsed real time, including 5.386284000s collecting
+    619912569504 bytes allocated, including 619916549416 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+> (time (run 1 (q) (fresh (s e n d m o r y) (assign 'o o) (assign 'm m) (assign 
+'y y) (assign 'e e) (assign 'n n) (assign 'd d) (assign 'r r) (assign 's s) (== 
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+(time (run 1 ...))
+    112 collections
+    0.462184247s elapsed cpu time, including 0.008513000s collecting
+    0.462482000s elapsed real time, including 0.008806000s collecting
+    936375680 bytes allocated, including 939423120 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+==== Critical Emitters ==== (OMYENDRS to YDENROSM)
+(load "send-sc.scm")
+
+> (time (run* (q) (fresh (s e n d m o r y) (assign 'y y) (assign 'd d) (assign '
+e e) (assign 'n n) (assign 'r r) (assign 'o o) (assign 's s) (assign 'm m) (== 
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+
+(time (run* (q) ...))
+    4204 collections
+    15.678219552s elapsed cpu time, including 0.216384000s collecting
+    15.687261000s elapsed real time, including 0.224429000s collecting
+    35264958400 bytes allocated, including 35261291136 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+==== CExternal Oracle Verifier ==== (Solved S=9,M=1,O=0)
+(load "send-ov.scm")
+
+> (time (run* (q) (fresh (s e n d m o r y) (assign 'y y) (assign 'd d) (assign '
+e e) (assign 'n n) (assign 'r r) (assign 'o o) (assign 's s) (assign 'm m) (== 
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+
+(time (run* (q) ...))
+    1370 collections
+    5.275174745s elapsed cpu time, including 0.058258000s collecting
+    5.277088000s elapsed real time, including 0.060931000s collecting
+    11492554016 bytes allocated, including 11495274096 bytes reclaimed
+((9 5 6 7 1 0 8 2))
+
+[OSMYDENR]
+> (time (run* (q) (fresh (s e n d m o r y) (assign 'o o) (assign 's s) (assign '
+m m) (assign 'y y) (assign 'd d) (assign 'e e) (assign 'n n) (assign 'r r) (== 
+q `(,s ,e ,n ,d ,m ,o ,r ,y)))))
+(time (run* (q) ...))
+    515 collections
+    1.902911430s elapsed cpu time, including 0.025138000s collecting
+    1.903654000s elapsed real time, including 0.026092000s collecting
+    4317089056 bytes allocated, including 4319839200 bytes reclaimed
+((9 5 6 7 1 0 8 2))
