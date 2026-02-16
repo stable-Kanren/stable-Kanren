@@ -13,10 +13,21 @@ assigned(L) :- letter(L), values(V), assign(L, V).
 % no digit can be given to two different symbols
 :- letter(L), letter(L1), assign(L, V1), assign(L1, V1), L != L1.
 
-:- assign(s, S), assign(e, E), assign(n, N), assign(d, D), assign(m, M), assign(o, O), assign(r, R), assign(y, Y), S*1000+E*100+N*10+D + M*1000+O*100+R*10+E != M*10000+O*1000+N*100+E*10+Y.
+% :- assign(s, S), assign(e, E), assign(n, N), assign(d, D), assign(m, M), assign(o, O), assign(r, R), assign(y, Y), S*1000+E*100+N*10+D + M*1000+O*100+R*10+E != M*10000+O*1000+N*100+E*10+Y.
 
-summ :- assign(s, S), assign(e, E), assign(n, N), assign(d, D), assign(m, M), assign(o, O), assign(r, R), assign(y, Y), S*1000+E*100+N*10+D + M*1000+O*100+R*10+E = M*10000+O*1000+N*100+E*10+Y.
-:- not summ.
+:- assign(d, D), assign(e, E), assign(y, Y), (D + E) \ 10 != Y.
+
+:- assign(d, D), assign(e, E), assign(n, N), assign(r, R), ((D + E) / 10 + N + R) \ 10 != E.
+
+:- assign(d, D), assign(n, N), assign(r, R), assign(e, E), assign(o, O), (((D + E) / 10 + N + R) / 10 + E + O) \ 10 != N.
+
+:- assign(d, D), assign(n, N), assign(r, R), assign(e, E), assign(o, O), assign(s, S), assign(m, M), ((((D + E) / 10 + N + R) / 10 + E + O) / 10 + S + M) \ 10 != O.
+
+:- assign(d, D), assign(n, N), assign(r, R), assign(e, E), assign(o, O), assign(s, S), assign(m, M), ((((D + E) / 10 + N + R) / 10 + E + O) / 10 + S + M) / 10 != M.
+
+
+% summ :- assign(s, S), assign(e, E), assign(n, N), assign(d, D), assign(m, M), assign(o, O), assign(r, R), assign(y, Y), S*1000+E*100+N*10+D + M*1000+O*100+R*10+E = M*10000+O*1000+N*100+E*10+Y.
+% :- not summ.
 
 % no leading zeros
 :- assign(m, M), M = 0.
