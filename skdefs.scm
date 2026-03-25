@@ -43,3 +43,24 @@
 (defineo (rembero-helper a x res out)
   (conde [(== a x) (== res out)]
          [(noto (== a x)) (== `(,a . ,res) out)]))
+
+; Impure, non-relational arithmetic operations using `project`
+; Create a stub twins for program analysis in `defineo`.
+(define (project+) succeed)
+(define (project-) succeed)
+
+(defineo (gt lhs rhs)
+  (project (lhs rhs)
+    (if (> lhs rhs)
+        succeed
+        fail)))
+
+(defineo (sub minuend subtrahend res)
+  (project (minuend subtrahend)
+    (== res (- minuend subtrahend))))
+
+(defineo (diagonal x y x1 y1)
+  (project (x y x1 y1)
+    (if (= (abs (- x x1)) (abs (- y y1)))
+        succeed
+        fail)))
