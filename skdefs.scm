@@ -44,6 +44,10 @@
   (conde [(== a x) (== res out)]
          [(noto (== a x)) (== `(,a . ,res) out)]))
 
+; As the underlying miniKanren is a pure relational language, we need to introduce
+; some impure operators just like the "is", ">", "-" in Prolog so that we can
+; utilize the modern CPU.
+;
 ; Impure, non-relational arithmetic operations using `project`
 ; Create a stub twins for program analysis in `defineo`.
 (define (project+) succeed)
