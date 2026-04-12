@@ -162,8 +162,7 @@
             ; over a recursive strcture like list.
             ; If the input program only has constraints, it's could be a definite program.
             ; So, the condition ensure to run non-monotonic resolution ONLY on normal program.
-            (if (and (or (not (stratified?))
-                         (and (not (stratified?)) (constrained?)))
+            (if (and (not (stratified?))
                 (null? 
                 ; `check-all-rules` computes all future answers, but we only
                 ; need to find one to make sure the partial answer is good.
