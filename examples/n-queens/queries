@@ -1,0 +1,214 @@
+queries
+
+; n = 10
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8 y9 y10)
+    (queen 5 y5)
+    (queen 6 y6)
+    (queen 4 y4)
+    (queen 7 y7)
+    (queen 3 y3)
+    (queen 8 y8)
+    (queen 2 y2)
+    (queen 9 y9)
+    (queen 1 y1)
+    (queen 10 y10)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8) (9 ,y9) (10 ,y10))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8 y9 y10)
+    (queen 8 y8)
+    (queen 6 y6)
+    (queen 9 y9)
+    (queen 2 y2)
+    (queen 5 y5)
+    (queen 1 y1)
+    (queen 4 y4)
+    (queen 7 y7)
+    (queen 10 y10)    
+    (queen 3 y3)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8) (9 ,y9) (10 ,y10))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8 y9 y10)
+    (queen 9 y9)
+    (queen 7 y7)
+    (queen 5 y5)
+    (queen 3 y3)
+    (queen 10 y10)
+    (queen 4 y4)
+    (queen 1 y1)
+    (queen 8 y8)
+    (queen 6 y6)
+    (queen 2 y2)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8) (9 ,y9) (10 ,y10))) ))
+
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8 y9 y10)
+    (queen 1 y1)
+    (queen 2 y2)
+    (queen 3 y3)
+    (queen 4 y4)
+    (queen 5 y5)
+    (queen 6 y6)
+    (queen 7 y7)
+    (queen 8 y8)
+    (queen 9 y9)
+    (queen 10 y10)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8) (9 ,y9) (10 ,y10))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10)
+    (queen x1 y1)
+    (queen x2 y2)
+    (queen x3 y3)
+    (queen x4 y4)
+    (queen x5 y5)
+    (queen x6 y6)
+    (queen x7 y7)
+    (queen x8 y8)
+    (queen x9 y9)
+    (queen x10 y10)
+    (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6) (,x7 ,y7) (,x8 ,y8) (,x9 ,y9) (,x10 ,y10))) ))
+
+
+; n = 9
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8 y9)
+    (queen 1 y1)
+    (queen 2 y2)
+    (queen 3 y3)
+    (queen 4 y4)
+    (queen 5 y5)
+    (queen 6 y6)
+    (queen 7 y7)
+    (queen 8 y8)
+    (queen 9 y9)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8) (9 ,y9))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 x6 x7 x8 x9 y1 y2 y3 y4 y5 y6 y7 y8 y9)
+    (queen x1 y1)
+    (queen x2 y2)
+    (queen x3 y3)
+    (queen x4 y4)
+    (queen x5 y5)
+    (queen x6 y6)
+    (queen x7 y7)
+    (queen x8 y8)
+    (queen x9 y9)
+    (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6) (,x7 ,y7) (,x8 ,y8) (,x9 ,y9))) ))
+
+; n = 8
+(run-partial #f (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen 4 y1)
+    (queen 5 y2)
+    (queen 3 y3)
+    (queen 6 y4)
+    (queen 2 y5)
+    (queen 7 y6)
+    (queen 1 y7)
+    (queen 8 y8)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8))) ))
+
+(run-partial #f (q) (fresh (x1 x2 x3 x4 x5 x6 x7 x8 y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen x1 y1)
+    (queen x2 y2)
+    (queen x3 y3)
+    (queen x4 y4)
+    (queen x5 y5)
+    (queen x6 y6)
+    (queen x7 y7)
+    (queen x8 y8)
+    (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6) (,x7 ,y7) (,x8 ,y8))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen 4 y4)
+    (queen 5 y5)
+    (queen 3 y3)
+    (queen 6 y6)
+    (queen 2 y2)
+    (queen 7 y7)
+    (queen 1 y1)
+    (queen 8 y8)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen 5 y5)
+    (queen 3 y3)
+    (queen 8 y8)
+    (queen 4 y4)
+    (queen 7 y7)
+    (queen 1 y1)
+    (queen 6 y6)
+    (queen 2 y2)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen 1 y1)
+    (queen 2 y2)
+    (queen 3 y3)
+    (queen 4 y4)
+    (queen 5 y5)
+    (queen 6 y6)
+    (queen 7 y7)
+    (queen 8 y8)
+    (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7) (8 ,y8))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 x6 x7 x8 y1 y2 y3 y4 y5 y6 y7 y8)
+    (queen x1 y1)
+    (queen x2 y2)
+    (queen x3 y3)
+    (queen x4 y4)
+    (queen x5 y5)
+    (queen x6 y6)
+    (queen x7 y7)
+    (queen x8 y8)
+    (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6) (,x7 ,y7) (,x8 ,y8))) ))
+
+; n = 7
+(run-partial #f (q) (fresh (y1 y2 y3 y4 y5 y6 y7) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (queen 5 y5) (queen 6 y6) (queen 7 y7) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6 y7) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (queen 5 y5) (queen 6 y6) (queen 7 y7) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6) (7 ,y7))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 x6 x7 y1 y2 y3 y4 y5 y6 y7) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (queen x5 y5) (queen x6 y6) (queen x7 y7) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6) (,x7 ,y7))) ))
+
+; n = 6
+(run-partial #f (q) (fresh (y1 y2 y3 y4 y5 y6) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (queen 5 y5) (queen 6 y6) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6))) ))
+
+(run-partial #f (q) (fresh (x1 x2 x3 x4 x5 x6 y1 y2 y3 y4 y5 y6) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (queen x5 y5) (queen x6 y6) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4 y5 y6) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (queen 5 y5) (queen 6 y6) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5) (6 ,y6))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 x6 y1 y2 y3 y4 y5 y6) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (queen x5 y5) (queen x6 y6) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4) (,x5 ,y5) (,x6 ,y6))) ))
+
+; n = 5
+(run* (q) (fresh (y1 y2 y3 y4 y5) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (queen 5 y5) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4) (5 ,y5))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 x5 y1 y2 y3 y4 y5) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (queen x5 y5) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4 (,x5 ,y5))) )))
+
+; n = 4
+(run-partial #f (q) (fresh (y1 y2 y3 y4) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4))) ))
+
+(run-partial #f (q) (fresh (x1 x2 x3 x4 y1 y2 y3 y4) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4))) ))
+
+(run* (q) (fresh (y1 y2 y3 y4) (queen 1 y1) (queen 2 y2) (queen 3 y3) (queen 4 y4) (== q `((1 ,y1) (2 ,y2) (3 ,y3) (4 ,y4))) ))
+
+(run* (q) (fresh (x1 x2 x3 x4 y1 y2 y3 y4) (queen x1 y1) (queen x2 y2) (queen x3 y3) (queen x4 y4) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3) (,x4 ,y4))) ))
+
+; n = 3
+(run* (q) (fresh (y1 y2 y3) (queen 1 y1) (queen 2 y2) (queen 3 y3) (== q `((1 ,y1) (2 ,y2) (3 ,y3) )) ))
+
+(run* (q) (fresh (x1 x2 x3 y1 y2 y3) (queen x1 y1) (queen x2 y2) (queen x3 y3) (== q `((,x1 ,y1) (,x2 ,y2) (,x3 ,y3))) ))
+
+; n = 2
+(run* (q) (fresh (y1 y2) (queen 1 y1) (queen 2 y2) (== q `((1 ,y1) (2 ,y2))) ))
+
+(run* (q) (fresh (x1 x2 y1 y2) (queen x1 y1) (queen x2 y2) (== q `((,x1 ,y1) (,x2 ,y2) )) ))
+
+; n = 1
+(run* (q) (fresh (y1) (queen 1 y1) (== q `((1 ,y1))) ))
+
+(run* (q) (fresh (x1 y1) (queen x1 y1) (== q `((,x1 ,y1))) ))
+
+
+
+(time (run 1 (q) (queen 1 1) (queen 2 5) (queen 3 8) (queen 4 6) (queen 5 3) (queen 6 7) (queen 7 2) (queen 8 4)))
+
+
+
+

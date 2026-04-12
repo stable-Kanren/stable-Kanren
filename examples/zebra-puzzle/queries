@@ -1,0 +1,48 @@
+; Partial answers.
+> (run* (q)
+      (house 2 'blue 'ukrainian 'horse 'tea 'chesterfields)
+      (house 3 'red 'english 'snails 'milk 'old_gold)
+      (drinks_water q))
+(norwegian)
+> (run* (q)
+      (house 2 'blue 'ukrainian 'horse 'tea 'chesterfields)
+      (house 3 'red 'english 'snails 'milk 'old_gold)
+      (has_zebra q))
+(japanese)
+
+; Time performance.
+> (time (run* (q)
+        (house 2 'blue 'ukrainian 'horse 'tea 'chesterfields)
+        (house 3 'red 'english 'snails 'milk 'old_gold)
+        (drinks_water q)))
+(time (run* (q) ...))
+    175 collections
+    0.603169208s elapsed cpu time, including 0.007669000s collecting
+    0.603202000s elapsed real time, including 0.007810000s collecting
+    1471291840 bytes allocated, including 1468533664 bytes reclaimed
+(norwegian)
+> (time (run* (q)
+        (house 2 'blue 'ukrainian 'horse 'tea 'chesterfields)
+        (house 3 'red 'english 'snails 'milk 'old_gold)
+        (has_zebra q)))
+(time (run* (q) ...))
+    197 collections
+    0.666128292s elapsed cpu time, including 0.009655000s collecting
+    0.666168000s elapsed real time, including 0.009834000s collecting
+    1649425792 bytes allocated, including 1652727104 bytes reclaimed
+(japanese)
+
+> (time (run* (q) (has_zebra q)))
+(time (run* (q) ...))
+    189575 collections
+    631.767269833s elapsed cpu time, including 24.276624000s collecting
+    631.907951000s elapsed real time, including 24.438921000s collecting
+    1590619958688 bytes allocated, including 1590607956256 bytes reclaimed
+(japanese)
+> (time (run* (q) (drinks_water q)))
+(time (run* (q) ...))
+    70345 collections
+    242.001545084s elapsed cpu time, including 7.743078000s collecting
+    242.513315000s elapsed real time, including 7.818959000s collecting
+    590222952976 bytes allocated, including 590230303784 bytes reclaimed
+(norwegian)

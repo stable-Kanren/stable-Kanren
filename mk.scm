@@ -158,9 +158,12 @@
             ; Performance optimization. If the input program is stratified, we 
             ; don't perform the additional non-monotonic resolution.
             ; [ToDo] This works at the syntax level only; add runtime level analysis later.
-            ; If the input program has constraints, it's a normal program.
-            (if (and (or (not (stratified?))
-                         (constrained?))
+            ;
+            ; Integrity constraints can also be used with definite programs
+            ; over a recursive strcture like list.
+            ; If the input program only has constraints, it's could be a definite program.
+            ; So, the condition ensure to run non-monotonic resolution ONLY on normal program.
+            (if (and (not (stratified?))
                 (null? 
                 ; `check-all-rules` computes all future answers, but we only
                 ; need to find one to make sure the partial answer is good.

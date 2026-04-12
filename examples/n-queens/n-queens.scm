@@ -1,5 +1,6 @@
 (source-directories '("." "../../"))
 (load "sk.scm")
+(load "skdefs.scm")
 ; Example taken from s(ASP) paper
 ; (https://www.cs.nmsu.edu/ALP/wp-content/uploads/2017/04/marple_etal2017.pdf)
 ;% solve the N queens problem for a given N, returning a list of queens as Q
@@ -82,42 +83,6 @@
 
 ; abs(X, X) :- X >= 0.
 ; abs(X, Y) :- X < 0, Y is X * -1.
-
-; As the underlying miniKanren is a pure relational language, we need to introduce
-; some impure operators just like the "is", ">", "-" in Prolog so that we can
-; utilize the modern CPU.
-(define (gt lhs rhs)
-  (lambdag@ (n f c : S P L)
-    (let ((lhs-num (walk lhs S))
-          (rhs-num (walk rhs S)))
-        (if (or (not (number? lhs-num)) (not (number? rhs-num)))
-            (fail n f c)
-            (if (> lhs-num rhs-num)
-                (succeed n f c)
-                (fail n f c))))))
-
-(define (sub minuend subtrahend res)
-  (lambdag@ (n f c : S P L)
-    (let ((minuend-num (walk* minuend S))
-          (subtrahend-num (walk* subtrahend S)))
-        (if (or (not (number? minuend-num)) (not (number? subtrahend-num)))
-            (fail n f c)
-        ((== res (- minuend-num subtrahend-num)) n f c)))))
-
-(define (diagonal x y x1 y1)
-  (lambdag@ (n f c : S P L)
-    (let ((x-num (walk* x S))
-          (y-num (walk* y S))
-          (x1-num (walk* x1 S))
-          (y1-num (walk* y1 S)))
-        (if (or (not (number? x-num))
-                (not (number? y-num))
-                (not (number? x1-num))
-                (not (number? y1-num)))
-            (fail n f c)
-            (if (= (abs (- x-num x1-num)) (abs (- y-num y1-num)))
-                (succeed n f c)
-                (fail n f c))))))
 
 ; Finding one answer.
 ; > (run 1 (q) (nqueens 8 q))

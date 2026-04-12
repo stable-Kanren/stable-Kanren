@@ -29,9 +29,9 @@
        (queen x y)))
 
 ; Bottom up rules to make sure the lower bound.
-(constrainto ((num x) (noto (row u))) ((= x u)))
+(constrainto [(num x) (noto (row u))] [(= x u)])
 
-(constrainto ((num y) (noto (col v))) ((= y v)))
+(constrainto [(num y) (noto (col v))] [(= y v)])
 
 
 ; queen(X,Y) :- not free(X,Y), num(X), num(Y).
@@ -45,28 +45,33 @@
    [(num x) (num y) (noto (queen x y))]))
 
 ; :- queen(X, Y), queen(U, V), X = U, Y != V.
-(constrainto ((queen x y) (queen u v)) ((= x u) (not (= y v))))
+(constrainto [(queen x y) (queen u v)] [(= x u) (not (= y v))])
 
 ; :- queen(X, Y), queen(U, V), Y = V, X != U.
-(constrainto ((queen x y) (queen u v)) ((= y v) (not (= x u))))
+(constrainto [(queen x y) (queen u v)] [(= y v) (not (= x u))])
 
 ; :- queen(X, Y), queen(U, V), abs(X - U) = abs(Y - V), X != U, Y != V.
-(constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v))) (not (= x u)) (not (= y v))))
+(constrainto [(queen x y) (queen u v)] [(= (abs (- x u)) (abs (- y v))) (not (= x u)) (not (= y v))])
 
 ; Solver specified rules (Not stable model semantics)
+; Enabling the four rules below speeds up the performance and removes duplicate
+; answers.
+; See discussions here: https://github.com/stable-Kanren/stable-Kanren/issues/8
+;
 ; Top-down query optimization constraint, this is an engineering hack, not
 ; stable model semantics. Other bottom-up solver won't produce the right answer.
+;
 ; :- queen(X, Y), queen(U, V), X > U.
-; (constrainto ((queen x y) (queen u v)) ((> x u)))
+; (constrainto [(queen x y) (queen u v)] [(> x u)])
 
 ; :- queen(X, Y), queen(U, V), X = U.
-; (constrainto ((queen x y) (queen u v)) ((= x u)))
+; (constrainto [(queen x y) (queen u v)] [(= x u)])
 
 ; :- queen(X, Y), queen(U, V), Y = V.
-; (constrainto ((queen x y) (queen u v)) ((= y v)))
+; (constrainto [(queen x y) (queen u v)] [(= y v)])
 
 ; :- queen(X, Y), queen(U, V), abs(X - U) = abs(Y - V).
-; (constrainto ((queen x y) (queen u v)) ((= (abs (- x u)) (abs (- y v)))))
+; (constrainto [(queen x y) (queen u v)] [(= (abs (- x u)) (abs (- y v)))])
 
 ; Adding a dummy head to predicate constraints, this also requires changes
 ; in resolution.
