@@ -1,0 +1,103 @@
+
+; ====== graph coloring on six states =====
+; paper examples
+> (load "gc-states.scm")
+> (run 1 (q) (fresh (n1 n2 n3 n4 n5 n6 c1 c2 c3 c4 c5 c6)
+                 (assign n1 c1) (assign n2 c2) (assign n3 c3)
+                 (assign n4 c4) (assign n5 c5) (assign n6 c6)
+                 (== q `((,n1 ,c1) (,n2 ,c2) (,n3 ,c3)
+                         (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))
+(((CA red) (CO green) (AZ green) (NM red) (NV blue)
+   (UT red)))
+> (run* (q)
+     (assign 'CA 'green) (assign 'CO 'red) (assign 'AZ 'red)
+     (assign 'NM 'blue) (assign 'NV 'blue) (assign 'UT 'green))
+(_.0)
+> (run* (q)
+     (fresh (n1 n4 n5 n6 c1 c4 c5 c6)
+      (assign n1 c1) (assign 'CO 'blue) (assign 'AZ 'red)
+      (assign n4 c4) (assign n5 c5) (assign n6 c6)
+      (== q `((,n1 ,c1) (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))
+(((CA green) (NM green) (NV blue) (UT green)))
+> (run* (q)
+     (fresh (n1 n3 n5 n6 c1 c3 c5 c6)
+      (assign n1 c1) (assign 'CO 'blue) (assign n3 c3)
+      (assign 'NM 'blue) (assign n5 c5) (assign n6 c6)
+      (== q `((,n1 ,c1) (,n3 ,c3) (,n5 ,c5) (,n6 ,c6)))))
+()
+
+; full run
+> (load "gc-states.scm")
+> (run* (q) (fresh (n1 n2 n3 n4 n5 n6 c1 c2 c3 c4 c5 c6)
+                   (assign n1 c1) (assign n2 c2) (assign n3 c3)
+                   (assign n4 c4) (assign n5 c5) (assign n6 c6)
+                   (== q `((,n1 ,c1) (,n2 ,c2) (,n3 ,c3)
+                           (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))
+(((CA red) (CO green) (AZ green) (NM red) (NV blue)
+   (UT red))
+  ((CA red) (CO green) (AZ green) (NM blue) (NV blue)
+    (UT red))
+  ((CA red) (CO green) (AZ blue) (NM red) (NV green) (UT red))
+  ((CA red) (CO blue) (AZ green) (NM red) (NV blue) (UT red))
+  ((CA red) (CO blue) (AZ blue) (NM red) (NV green) (UT red))
+  ((CA red) (CO blue) (AZ blue) (NM green) (NV green)
+    (UT red))
+  ((CA green) (CO red) (AZ red) (NM green) (NV blue)
+    (UT green))
+  ((CA green) (CO red) (AZ red) (NM blue) (NV blue)
+    (UT green))
+  ((CA green) (CO red) (AZ blue) (NM green) (NV red)
+    (UT green))
+  ((CA green) (CO blue) (AZ red) (NM green) (NV blue)
+    (UT green))
+  ((CA green) (CO blue) (AZ blue) (NM red) (NV red)
+    (UT green))
+  ((CA green) (CO blue) (AZ blue) (NM green) (NV red)
+    (UT green))
+  ((CA blue) (CO red) (AZ red) (NM green) (NV green)
+    (UT blue))
+  ((CA blue) (CO red) (AZ red) (NM blue) (NV green) (UT blue))
+  ((CA blue) (CO red) (AZ green) (NM blue) (NV red) (UT blue))
+  ((CA blue) (CO green) (AZ red) (NM blue) (NV green)
+    (UT blue))
+  ((CA blue) (CO green) (AZ green) (NM red) (NV red)
+    (UT blue))
+  ((CA blue) (CO green) (AZ green) (NM blue) (NV red)
+    (UT blue)))
+> (time (length (run* (q) (fresh (n1 n2 n3 n4 n5 n6 c1 c2 c3 c4 c5 c6)
+                   (assign n1 c1) (assign n2 c2) (assign n3 c3)
+                   (assign n4 c4) (assign n5 c5) (assign n6 c6)
+                   (== q `((,n1 ,c1) (,n2 ,c2) (,n3 ,c3)
+                           (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))))
+(time (length (run* (...) ...)))
+    5262 collections
+    21.996391875s elapsed cpu time, including 0.213714000s collecting
+    22.006445000s elapsed real time, including 0.224734000s collecting
+    44148990304 bytes allocated, including 44152484816 bytes reclaimed
+18
+>
+
+; ====== graph coloring on six nodes =====
+> (load "gc.scm")
+> (run* (q) (fresh (n1 n2 n3 n4 n5 n6 c1 c2 c3 c4 c5 c6)
+                   (assign n1 c1) (assign n2 c2) (assign n3 c3)
+                   (assign n4 c4) (assign n5 c5) (assign n6 c6)
+                   (== q `((,n1 ,c1) (,n2 ,c2) (,n3 ,c3)
+                           (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))
+(((1 r) (2 g) (3 b) (4 r) (5 g) (6 r)) ((1 r) (2 b) (3 g) (4 r) (5 b) (6 r))
+  ((1 g) (2 r) (3 b) (4 g) (5 r) (6 g))
+  ((1 g) (2 b) (3 r) (4 g) (5 b) (6 g))
+  ((1 b) (2 r) (3 g) (4 b) (5 r) (6 b))
+  ((1 b) (2 g) (3 r) (4 b) (5 g) (6 b)))
+> (time (length (run* (q) (fresh (n1 n2 n3 n4 n5 n6 c1 c2 c3 c4 c5 c6)
+                   (assign n1 c1) (assign n2 c2) (assign n3 c3)
+                   (assign n4 c4) (assign n5 c5) (assign n6 c6)
+                   (== q `((,n1 ,c1) (,n2 ,c2) (,n3 ,c3)
+                           (,n4 ,c4) (,n5 ,c5) (,n6 ,c6)))))))
+(time (length (run* (...) ...)))
+    4635 collections
+    18.106432289s elapsed cpu time, including 0.183656000s collecting
+    18.112378000s elapsed real time, including 0.192331000s collecting
+    38883253984 bytes allocated, including 38886887504 bytes reclaimed
+6
+>

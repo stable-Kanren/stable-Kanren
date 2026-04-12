@@ -28,7 +28,7 @@
     [(== x 2) (== y 3)]
     ; [(== x 2) (== y 4)]
     ; [(== x 3) (== y 4)]
-    ; [(== x 3) (== y 5)]
+    ; ; [(== x 3) (== y 5)]
     ; [(== x 3) (== y 6)]
     ; [(== x 4) (== y 5)]
     ; [(== x 5) (== y 6)]
@@ -51,24 +51,50 @@
 
 ; % Algorithms.
 ; % Pick a color one at a time and test against all previous colorings.
-(defineo (colorize n in out)
+(defineo (colorize in out)
   (conde
-    [(== n 0) (== in out)]
-    [(fresh (n1 c tmp)
-        (gt n 0)
+    [(sufficient in) (== in out)]
+    [(fresh (n c tmp)
+        (node n)
         (color c)
-        (noto (violate c n in))
-        (sub n 1 n1)
+        (safe c n)
         (== `((,n ,c) . ,in) tmp)
-        (colorize n1 tmp out))]))
+        (colorize tmp out))]))
+
+; % iterate in, call `(safe c n)` to build up constraints.
+(defineo (populate in)
+  (conde 
+    [(nullo in)]
+    [(noto (nullo in))
+     (fresh (t n c)
+       (== `((,n ,c) . ,t) in)
+       (safe c n)
+       (populate t))]))
+
+; % Relational wrapper.
+(defineo (gc in out)
+  (populate in)
+  (colorize `() out))
+
+(defineo (gc in out)
+  (colorize `() out)
+  (populate in))
 
 ; % Check if the two neighbors get the same color for all previous colorings.
-(defineo (violate c n ans)
-  (conde
-    [(fresh (h t)
-        (== `(,h . ,t) ans)
-        (violate c n t))]
-    [(fresh (n1 c1 t)
-        (== `((,n1 ,c1) . ,t) ans)
-        (neighbors n n1)
-        (== c c1))]))
+(defineo (safe c n)
+  succeed)
+
+(defineo (sufficient ans)
+  succeed)
+
+(constrainto [(safe c1 n1) (safe c2 n2)] [(violate c1 n1 c2 n2)])
+
+(constrainto [(node n1) (node n2)] [(or (eq? n1 n2) (< n1 n2))])
+
+(constrainto [(sufficient ans)] [(bad ans)])
+
+(define (violate c1 n1 c2 n2)
+  (and (not (null? (run 1 (q) (neighbors n1 n2)))) (eq? c1 c2)))
+
+(define (bad ans)
+  (not (= (length (run* (q) (node q))) (length ans))))
