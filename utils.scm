@@ -1,8 +1,20 @@
 ;;; Representing sets as unordered lists.
 ; O(n) complexity.
+
+; [ToDo] Add test cases for different signatures and uses.
+(define (list-compare? l1 l2)
+  (cond ((and (null? l1) (null? l2)) #t)          ; Both empty
+        ((or (null? l1) (null? l2)) #f)           ; One empty
+        ((eq? (car l1) (car l2))                  ; Heads match
+         (list-compare? (cdr l1) (cdr l2)))       ; Recursion
+        (else #f)))
+
 (define (element-of-set? x set)
   (cond ((null? set) #f)
-        ((equal? x (get-key (car set))) (car set))
+        ; The original implementation of coLP-LFP/SLG uses `equal?`
+        ; ((equal? x (get-key (car set))) (car set))
+        ((and (list? x) (list-compare? x (get-key (car set)))) (car set))
+        ((eqv? x (get-key (car set))) (car set))
         (else (element-of-set? x (cdr set)))))
 
 ; O(1) complexity.

@@ -417,7 +417,7 @@
     ; At this point, all arguments have a substitution.
     (let* ([key (map (lambda (arg)
                      (walk* arg S)) argv)]
-           [result (element-of-set? (list name key) P)]
+           [result (element-of-set? (cons name key) P)]
            [emitter (sym-append-str name
                 (number->string (modulo n 2)))])
     ; The query interface will also query the same goal multiple times with
@@ -432,14 +432,14 @@
     ; adjust it after we have a heuristic search.
     (if (and result (< n (get-value result)))
       ; We do not check constraints if we had the truth value.
-      (list S (adjoin-set (make-record (list name key) n) P) L)
+      (list S (adjoin-set (make-record (cons name key) n) P) L)
       ; Ideally, these emitter should "attach" to the goal function in the "run"
       ; interface, so that we don't have to look it up here again and again.
       (if (constraint-checker emitter key L)
         ; Violated constraint terminates the search.
         (mzero)
         ; Otherwise, record predicate with truth value.
-        (list S (adjoin-set (make-record (list name key) n) P) 
+        (list S (adjoin-set (make-record (cons name key) n) P) 
           (append L (constraint-updater emitter key L))))))))
 
 (define-syntax noto
@@ -474,7 +474,7 @@
        `(define (,(sym-append-str `name "+"))
           (lambdag@ (n cfs c : S P L)
             (let* ([name+ (sym-append-str `name "+")]
-                   [signature (list name+ `())]
+                   [signature (cons name+ `())]
                    [result (element-of-set? signature P)]
                    [record (element-of-set? signature cfs)])
               ; Before the execution, check if the node we have encountered
@@ -499,7 +499,7 @@
         `(define (,(sym-append-str `name "-"))
           (lambdag@ (n cfs c : S P L)
             (let* ([name- (sym-append-str `name "-")]
-                   [signature (list name- `())]
+                   [signature (cons name- `())]
                    [result (element-of-set? signature P)]
                    [record (element-of-set? signature cfs)])
               (if (or (and result #t) (and record #t))
@@ -535,7 +535,7 @@
           (let* ([args (map (lambda (arg)
                              (walk* arg S))
                            argv)]
-                 [signature (list `name args)]
+                 [signature (cons `name args)]
                  [result (element-of-set? signature P)]
                  [record (element-of-set? signature cfs)])
           ;;; Before the execution, check if we have computed the partial result.

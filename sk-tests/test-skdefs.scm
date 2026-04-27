@@ -237,30 +237,28 @@
 
 `((tofu . _.0)))
 
-; Safe variable assumption not allow the following test.
-; (test-check "testskdefs.tex-31"
-; (run 5 (l)
-;   (membero 'tofu l))
-
-
-; `((tofu . _.0)
-;  (_.0 tofu . _.1)
-;  (_.0 _.1 tofu . _.2)
-;  (_.0 _.1 _.2 tofu . _.3)
-;  (_.0 _.1 _.2 _.3 tofu . _.4))
-; )
-
 (test-check "testskdefs.tex-31"
 (run 5 (l)
   (membero 'tofu l))
 
+
 `((tofu . _.0)
- (_.0 tofu . _.1))
-)
+ (_.0 tofu . _.1)
+ (_.0 _.1 tofu . _.2)
+ (_.0 _.1 _.2 tofu . _.3)
+ (_.0 _.1 _.2 _.3 tofu . _.4)))
+
+(test-check "testskdefs.tex-32"
+(run 5 (l)
+  (membero 'tofu l))
+
+`((tofu . _.0)
+ (_.0 tofu . _.1)
+ (_.0 _.1 tofu . _.2)
+ (_.0 _.1 _.2 tofu . _.3)
+ (_.0 _.1 _.2 _.3 tofu . _.4)))
 
 ; ==== Testing appendo ====
-; [ToDo] Improve coinductive implementation when dealing with the loop that
-; contains variables.
 (test-check "testappendo.tex-1"
 (run* (x)
   (appendo
@@ -311,11 +309,10 @@
 
 
 `((cake with ice d t)
- (cake with ice _.0 d t))
- ; (cake with ice _.0 _.1 d t)
- ; (cake with ice _.0 _.1 _.2 d t)
- ; (cake with ice _.0 _.1 _.2 _.3 d t))
-)
+ (cake with ice _.0 d t)
+ (cake with ice _.0 _.1 d t)
+ (cake with ice _.0 _.1 _.2 d t)
+ (cake with ice _.0 _.1 _.2 _.3 d t)))
 
 (test-check "testappendo.tex-7"
 (run 5 (y)
@@ -324,11 +321,10 @@
 
 
 `(()
- (_.0))
- ; (_.0 _.1)
- ; (_.0 _.1 _.2)
- ; (_.0 _.1 _.2 _.3))
-)
+ (_.0)
+ (_.0 _.1)
+ (_.0 _.1 _.2)
+ (_.0 _.1 _.2 _.3)))
 
  (define y 
 
@@ -341,8 +337,7 @@
 `(cake with ice . ,y)
 
 
-`(cake with ice . (_.0 _.1 _.2))
-)
+`(cake with ice . (_.0 _.1 _.2)))
 
 (test-check "testappendo.tex-9"
 (run 5 (x)
@@ -357,8 +352,7 @@
  (cake with ice _.0 d t _.0)
  (cake with ice _.0 _.1 d t _.0 _.1)
  (cake with ice _.0 _.1 _.2 d t _.0 _.1 _.2)
- (cake with ice _.0 _.1 _.2 _.3 d t _.0 _.1 _.2 _.3))
-)
+ (cake with ice _.0 _.1 _.2 _.3 d t _.0 _.1 _.2 _.3)))
 
 (test-check "testappendo.tex-10"
 (run* (x)
@@ -369,8 +363,7 @@
       x)))
 
 
-`((cake with ice cream d t . _.0))
-)
+`((cake with ice cream d t . _.0)))
 
 (test-check "testappendo.tex-11"
 (run 6 (x)
@@ -383,8 +376,7 @@
  (cake with)
  (cake with ice)
  (cake with ice d)
- (cake with ice d t))
-)
+ (cake with ice d t)))
 
 (test-check "testappendo.tex-12"
 (run 6 (y)
@@ -397,8 +389,7 @@
  (ice d t)
  (d t)
  (t)
- ())
-)
+ ()))
 
 (test-check "testappendo.tex-13"
 (run 7 (r)
@@ -422,13 +413,12 @@
 
 
 `(()
- (_.0))
- ; (_.0 _.1)
- ; (_.0 _.1 _.2)
- ; (_.0 _.1 _.2 _.3)
- ; (_.0 _.1 _.2 _.3 _.4)
- ; (_.0 _.1 _.2 _.3 _.4 _.5))
-)
+ (_.0)
+ (_.0 _.1)
+ (_.0 _.1 _.2)
+ (_.0 _.1 _.2 _.3)
+ (_.0 _.1 _.2 _.3 _.4)
+ (_.0 _.1 _.2 _.3 _.4 _.5)))
 
 (test-check "testappendo.tex-15"
 (run 7 (y)
@@ -437,13 +427,12 @@
 
 
 `(_.0 
- _.0)
- ; _.0
- ; _.0
- ; _.0
- ; _.0
- ; _.0)
-)
+ _.0
+ _.0
+ _.0
+ _.0
+ _.0
+ _.0))
 
 (test-check "testappendo.tex-16"
 (run 7 (z)
@@ -452,13 +441,12 @@
 
 
 `(_.0
- (_.0 . _.1))
- ; (_.0 _.1 . _.2)
- ; (_.0 _.1 _.2 . _.3)
- ; (_.0 _.1 _.2 _.3 . _.4)
- ; (_.0 _.1 _.2 _.3 _.4 . _.5)
- ; (_.0 _.1 _.2 _.3 _.4 _.5 . _.6))
-)
+ (_.0 . _.1)
+ (_.0 _.1 . _.2)
+ (_.0 _.1 _.2 . _.3)
+ (_.0 _.1 _.2 _.3 . _.4)
+ (_.0 _.1 _.2 _.3 _.4 . _.5)
+ (_.0 _.1 _.2 _.3 _.4 _.5 . _.6)))
 
 (test-check "testappendo.tex-17"
 (run 7 (r)
@@ -468,13 +456,12 @@
 
 
 `((() _.0 _.0)
- ((_.0) _.1 (_.0 . _.1)))
- ; ((_.0 _.1) _.2 (_.0 _.1 . _.2))
- ; ((_.0 _.1 _.2) _.3 (_.0 _.1 _.2 . _.3))
- ; ((_.0 _.1 _.2 _.3) _.4 (_.0 _.1 _.2 _.3 . _.4))
- ; ((_.0 _.1 _.2 _.3 _.4) _.5 (_.0 _.1 _.2 _.3 _.4 . _.5))
- ; ((_.0 _.1 _.2 _.3 _.4 _.5) _.6 (_.0 _.1 _.2 _.3 _.4 _.5 . _.6)))
-)
+ ((_.0) _.1 (_.0 . _.1))
+ ((_.0 _.1) _.2 (_.0 _.1 . _.2))
+ ((_.0 _.1 _.2) _.3 (_.0 _.1 _.2 . _.3))
+ ((_.0 _.1 _.2 _.3) _.4 (_.0 _.1 _.2 _.3 . _.4))
+ ((_.0 _.1 _.2 _.3 _.4) _.5 (_.0 _.1 _.2 _.3 _.4 . _.5))
+ ((_.0 _.1 _.2 _.3 _.4 _.5) _.6 (_.0 _.1 _.2 _.3 _.4 _.5 . _.6))))
 
 ; ==== Testing rembero ====
 ; Safe variable assumption requires a variable to unify with a value. In the
